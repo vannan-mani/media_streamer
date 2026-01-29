@@ -1,0 +1,3 @@
+# Media Streamer
+
+Project initialized.
