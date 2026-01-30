@@ -1,0 +1,12 @@
+.sparkline {
+    display: block;
+    shape-rendering: geometricPrecision;
+}
+
+.sparkline path {
+    vector-effect: non-scaling-stroke;
+}
+
+.sparkline path {
+    transition: stroke var(--duration-fast) var(--ease-out);
+}

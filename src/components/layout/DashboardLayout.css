@@ -1,0 +1,47 @@
+/* 
+  SYSTEMATIC DASHBOARD LAYOUT
+  Foundation: 3-Tier Grid with Strict Containment
+*/
+
+.dashboard-layout {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    /* Balanced vertical distribution: 14vh Top, Auto Middle, 30vh Bottom */
+    grid-template-rows: 14vh 1fr 30vh;
+    background: var(--color-bg);
+    overflow: hidden;
+    padding: 1.5vh 5vw;
+    /* Consistent horizontal padding (90% width center) */
+    gap: 1.5vh;
+    box-sizing: border-box;
+}
+
+/* TIER 1: TOP BAR */
+.dashboard-layout> :first-child {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* TIER 2: MIDDLE CONTENT */
+.dashboard-content {
+    display: grid;
+    /* Reduced video width (1.2fr) to give Controls (1fr) more room */
+    grid-template-columns: 1.2fr 1fr;
+    gap: 1.5vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-area,
+.control-area {
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+/* TIER 3: BOTTOM BAR */
+.dashboard-layout> :last-child {
+    min-height: 0;
+    overflow: hidden;
+}

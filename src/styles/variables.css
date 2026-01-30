@@ -1,0 +1,138 @@
+:root {
+  /* ============================================
+     COLORS — Refined Light Palette
+     ============================================ */
+
+  /* Neutrals */
+  --color-bg: #F2F2F7;
+  --color-bg-secondary: #FFFFFF;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #636366;
+  --color-text-tertiary: #8E8E93;
+  --color-border: #C6C6C8;
+  --color-border-light: #E5E5EA;
+
+  /* Accent Colors (iOS Palette) */
+  --color-primary: #007AFF;
+  --color-success: #34C759;
+  --color-warning: #FF9500;
+  --color-critical: #FF3B30;
+  --color-info: #5AC8FA;
+
+  /* Semantic Colors */
+  --color-live: var(--color-critical);
+  --color-recording: var(--color-critical);
+  --color-active: var(--color-primary);
+  --color-healthy: var(--color-success);
+
+  /* ============================================
+     GLASSMORPHISM — Subtle, Not Heavy
+     ============================================ */
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: 20px;
+  --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --glass-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Active State */
+  --glass-border-active: 1px solid var(--color-primary);
+
+  /* ============================================
+     TYPOGRAPHY — Tighter Scale
+     ============================================ */
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  --font-text: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Font Sizes — Smaller Scale */
+  --text-xs: 0.6875rem;
+  /* 11px */
+  --text-sm: 0.75rem;
+  /* 12px */
+  --text-base: 0.8125rem;
+  /* 13px */
+  --text-lg: 0.875rem;
+  /* 14px */
+  --text-xl: 1rem;
+  /* 16px */
+  --text-2xl: 1.125rem;
+  /* 18px */
+  --text-3xl: 1.5rem;
+  /* 24px */
+  --text-4xl: 2rem;
+  /* 32px */
+
+  /* Font Weights */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ============================================
+     SPACING — Tight 4px Grid
+     ============================================ */
+
+  --space-1: 0.125rem;
+  /* 2px */
+  --space-2: 0.25rem;
+  /* 4px */
+  --space-3: 0.375rem;
+  /* 6px */
+  --space-4: 0.5rem;
+  /* 8px */
+  --space-5: 0.75rem;
+  /* 12px */
+  --space-6: 1rem;
+  /* 16px */
+  --space-8: 1.5rem;
+  /* 24px */
+  --space-10: 2rem;
+  /* 32px */
+  --space-12: 2.5rem;
+  /* 40px */
+  --space-16: 3rem;
+  /* 48px */
+  --space-20: 4rem;
+  /* 64px */
+
+  /* ============================================
+     ANIMATION
+     ============================================ */
+
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 250ms;
+
+  --ease-out: cubic-bezier(0.2, 0.0, 0.0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ============================================
+     LAYOUT ZONES — Compact Heights
+     ============================================ */
+
+  --status-strip-height-default: 40px;
+  --status-strip-height-hover: 56px;
+  --status-strip-height-expanded: 80px;
+
+  --control-stack-width: 35%;
+  --main-monitor-width: 65%;
+
+  --context-drawer-height-collapsed: 24px;
+  --context-drawer-height-expanded: 260px;
+
+  /* ============================================
+     Z-INDEX LAYERS
+     ============================================ */
+
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-alert: 400;
+}

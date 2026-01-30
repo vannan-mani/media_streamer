@@ -1,0 +1,121 @@
+/*
+  SYSTEMATIC STATUS STRIP
+  Layout: Ultra-Compact Header + Multi-Row Sparklines
+*/
+
+.status-strip {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0.6vh 1vw;
+    box-sizing: border-box;
+    overflow: hidden;
+    gap: 0.2vh;
+}
+
+/* Row 1: Status Line (Tightened) */
+.status-strip-main {
+    flex: 0 0 2vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Center-align the status line */
+    gap: 2.5vw;
+    overflow: hidden;
+}
+
+.status-time {
+    font-size: 13px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--color-primary);
+}
+
+.status-recording {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 900;
+    color: #FF3B30;
+    background: rgba(255, 59, 48, 0.08);
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+.status-endpoint {
+    font-size: 10px;
+    font-weight: 800;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Row 2: Health Grid - MAXIMUM HEIGHT for graphs */
+.status-strip-details {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.8vw;
+    min-height: 0;
+}
+
+.health-metric {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1.5px solid;
+    background: rgba(255, 255, 255, 0.4);
+    min-height: 0;
+    overflow: hidden;
+    /* Restored: Sparkline padding now handles visibility */
+}
+
+.health-metric:nth-child(1) {
+    border-color: rgba(0, 122, 255, 0.3);
+}
+
+.health-metric:nth-child(2) {
+    border-color: rgba(175, 82, 222, 0.3);
+}
+
+.health-metric:nth-child(3) {
+    border-color: rgba(255, 149, 0, 0.3);
+}
+
+.health-metric:nth-child(4) {
+    border-color: rgba(52, 199, 89, 0.3);
+}
+
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-bottom: 2px;
+    /* Balanced margin for headroom without clipping */
+}
+
+.health-label {
+    font-size: 8px;
+    font-weight: 900;
+    opacity: 0.4;
+    text-transform: uppercase;
+}
+
+.health-value {
+    font-size: 10px;
+    font-weight: 900;
+    font-family: var(--font-mono);
+}
+
+.health-sparkline-wrapper {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

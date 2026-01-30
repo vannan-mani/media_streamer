@@ -1,0 +1,236 @@
+/* ============================================
+   RESET & BASE
+   ============================================ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-text);
+    font-size: var(--text-base);
+    font-weight: var(--weight-regular);
+    color: var(--color-text-primary);
+    background: var(--color-bg);
+    line-height: 1.5;
+    overflow: hidden;
+    /* Prevent scroll on dashboard */
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+    font-weight: var(--weight-semibold);
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: var(--text-4xl);
+}
+
+h2 {
+    font-size: var(--text-3xl);
+}
+
+h3 {
+    font-size: var(--text-2xl);
+}
+
+h4 {
+    font-size: var(--text-xl);
+}
+
+h5 {
+    font-size: var(--text-lg);
+}
+
+h6 {
+    font-size: var(--text-base);
+}
+
+code,
+pre {
+    font-family: var(--font-mono);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-tertiary);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: all var(--duration-base) var(--ease-out);
+}
+
+.glass:hover {
+    background: var(--glass-bg-hover);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.glass-active {
+    border: var(--glass-border-active);
+}
+
+.text-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.text-secondary {
+    color: var(--color-text-secondary);
+}
+
+.text-tertiary {
+    color: var(--color-text-tertiary);
+}
+
+/* Live Status Indicator */
+.status-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-live);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.status-live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--color-live);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Recording Indicator */
+.status-recording {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-recording);
+    font-weight: var(--weight-medium);
+}
+
+.status-recording::before {
+    content: '●';
+    font-size: var(--text-lg);
+}
+
+/* Active Badge — Compact */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.badge-success {
+    background: var(--color-success);
+    color: white;
+}
+
+.badge-live {
+    background: var(--color-live);
+    color: white;
+}
+
+/* Micro-interaction: Click Feedback */
+.clickable {
+    cursor: pointer;
+    transition: transform var(--duration-instant) var(--ease-out);
+    user-select: none;
+}
+
+.clickable:active {
+    transform: scale(0.98);
+}
+
+/* ============================================
+   FOCUS STYLES
+   ============================================ */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   BUTTON RESET
+   ============================================ */
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+}

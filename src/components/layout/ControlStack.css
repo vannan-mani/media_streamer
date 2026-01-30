@@ -1,0 +1,138 @@
+/*
+  SYSTEMATIC CONTROL STACK
+  Optimized for Logical Grouping & Symmetrical Sizing
+*/
+
+.control-stack {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+    /* Gap between the two GlassCards */
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Ensure each section occupies 50% height */
+.control-stack>* {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.control-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1vh;
+    box-sizing: border-box;
+}
+
+.section-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5vh 0.8vw;
+    margin-bottom: 0.8vh;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    border-left: 3px solid var(--color-primary);
+}
+
+.section-header h3 {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* Grids - ENFORCED SYMMETRY */
+.input-grid,
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.6vh;
+    flex: 1;
+    min-height: 0;
+}
+
+/* SYMMETRICAL CONTROL CARDS */
+.control-item-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6vh 0.4vw;
+    border-radius: 8px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.2);
+    min-height: 0;
+    overflow: hidden;
+    text-align: center;
+    transition: all 0.15s ease-out;
+}
+
+.card-name {
+    font-size: clamp(9px, 0.75vw, 11px);
+    font-weight: 800;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.card-meta {
+    font-size: 8px;
+    font-weight: 600;
+    opacity: 0.5;
+    margin-top: 2px;
+}
+
+/* Active States */
+.control-item-card.active {
+    background: rgba(255, 255, 255, 0.5);
+    border-width: 2.5px;
+}
+
+.input-card.active {
+    border-color: #007AFF;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.1);
+}
+
+.preset-card.active {
+    border-color: #AF52DE;
+    box-shadow: 0 0 10px rgba(175, 82, 222, 0.1);
+}
+
+.active-dot {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    font-size: 7px;
+}
+
+.input-card.active .active-dot {
+    color: #007AFF;
+}
+
+.preset-card.active .active-dot {
+    color: #AF52DE;
+}
+
+.card-icon {
+    margin-bottom: 2px;
+    opacity: 0.6;
+}
+
+.input-card.active .card-icon {
+    opacity: 1;
+    color: #007AFF;
+}
+
+.preset-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
