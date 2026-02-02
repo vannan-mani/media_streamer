@@ -75,38 +75,40 @@ class DeckLinkManager:
             source.link(sink)
             
             # STEP 1: Check hardware existence (READY state)
-            # This is fast and reliable. If this fails, the device number is invalid.
+            # This is fast and reliable.
             ret = pipeline.set_state(Gst.State.READY)
-            if ret == Gst.StateChangeReturn.FAILURE:
-                logger.debug(f"Device index {device_num} failed to reach READY state (likely does not exist)")
-                pipeline.set_state(Gst.State.NULL)
-                return None
             
-            # AT THIS POINT, HARDWARE EXISTS! We must return it even if signal detection fails.
-            has_signal = False
-            detected_format = "No Signal"
-            
-            # Get device name while in READY state
+            # If it reports FAILURE, it might be busy or non-existent.
+            # We'll try to get the name property anyway if we can.
+            name = None
             try:
                 name = source.get_property("device-name")
             except:
-                name = None
-            display_name = name if name and "DeckLink" in name else f"DeckLink SDI Port {device_num}"
+                pass
+
+            if ret == Gst.StateChangeReturn.FAILURE and not name:
+                logger.debug(f"Device index {device_num} failed READY state and has no name (likely does not exist)")
+                pipeline.set_state(Gst.State.NULL)
+                return None
+            
+            # AT THIS POINT, HARDWARE LIKELY EXISTS!
+            has_signal = False
+            detected_format = "No Signal"
+            
+            display_name = name if name and "DeckLink" in name else f"DeckLink Port {device_num}"
 
             # STEP 2: Check signal (PLAYING state)
-            # This is more intensive. We don't fail the probe if this fails.
             bus = pipeline.get_bus()
             ret = pipeline.set_state(Gst.State.PLAYING)
             
             if ret != Gst.StateChangeReturn.FAILURE:
-                # Wait for signal. We'll poll the bus for a moment.
+                # Wait for signal.
                 start_time = time.time()
-                timeout = 0.8 # Reduced timeout slightly for responsiveness
+                timeout = 0.5 
                 
                 while time.time() - start_time < timeout:
                     msg = bus.pop_filtered(0.1 * Gst.SECOND, Gst.MessageType.ELEMENT | Gst.MessageType.ERROR)
                     if not msg:
-                        # Polling fallback
                         try:
                             if source.get_property("signal"):
                                 has_signal = True
@@ -122,7 +124,6 @@ class DeckLinkManager:
                     elif msg.type == Gst.MessageType.ERROR:
                         break
                 
-                # Double check signal property
                 if not has_signal:
                     try:
                         has_signal = source.get_property("signal")
@@ -138,11 +139,11 @@ class DeckLinkManager:
                             height = s.get_value("height")
                             fps_n = s.get_value("framerate").numerator
                             fps_d = s.get_value("framerate").denominator
-                            detected_format = f"{width}x{height} @ {fps_n/fps_d:.2f}fps"
+                            detected_format = f"{width}p{int(fps_n/fps_d)}"
                     except:
                         detected_format = "Signal Detected"
             else:
-                logger.debug(f"Device {device_num} exists but failed to reach PLAYING state (might be busy)")
+                logger.debug(f"Device {device_num} exists but failed to reach PLAYING state (likely busy)")
                 detected_format = "Hardware Busy"
 
             device_info = {
@@ -151,11 +152,11 @@ class DeckLinkManager:
                 "name": display_name,
                 "inputs": [{
                     "id": f"input_{device_num}",
-                    "port": "SDI Input",
+                    "port": "SDI",
                     "device_number": device_num,
                     "signal_detected": has_signal,
                     "format": detected_format,
-                    "active": True if device_num == 0 else False
+                    "active": False
                 }]
             }
             

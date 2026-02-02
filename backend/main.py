@@ -264,6 +264,19 @@ def get_sentinel_options_hierarchical():
                 "channels": channels
             }
     
+    # Restoring NDI Source as a placeholder (Capability Mock)
+    inputs["ndi"] = {
+        "id": "ndi",
+        "name": "NDI Network Source",
+        "channels": [{
+            "id": "ndi_1",
+            "channelNumber": 1,
+            "signalStatus": "waiting",
+            "format": "Ready for Discovery",
+            "selectable": False
+        }]
+    }
+    
     return {
         "inputs": inputs,
         "destinations": stream_config['destinations'],
