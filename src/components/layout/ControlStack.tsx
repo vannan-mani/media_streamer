@@ -102,6 +102,7 @@ const ControlStack: React.FC = () => {
                 status={systemStatus}
                 onToggle={handleToggle}
                 canGoLive={isConfigurationComplete}
+                hasSignal={Object.values(inputDevices).find(d => d.id.includes(selectedChannelId?.split('_')[0] || 'none'))?.channels.some(ch => ch.signalStatus === 'present')}
             />
         </div>
     );

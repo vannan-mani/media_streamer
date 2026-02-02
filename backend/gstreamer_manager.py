@@ -110,7 +110,22 @@ class GStreamerManager:
         bus.connect("message::error", self._on_error_message)
         bus.connect("message::warning", self._on_warning_message)
         bus.connect("message::eos", self._on_eos_message)
+        bus.connect("message::element", self._on_element_message)
         logger.info("Bus message handlers connected")
+        
+    def _on_element_message(self, bus, message):
+        """
+        Handle element-specific messages, particularly DeckLink signal changes
+        """
+        struct = message.get_structure()
+        if struct and struct.get_name() == "decklink-video-input-signal-changed":
+            present = struct.get_value("present")
+            if not present:
+                logger.warning("HARDWARE ALERT: DeckLink Signal LOST during transmission!")
+                self.stats['network_health'] = 'no_signal'
+            else:
+                logger.info("HARDWARE ALERT: DeckLink Signal Restored.")
+                self.stats['network_health'] = 'good'
         
     def _buffer_probe_callback(self, pad, info):
         """

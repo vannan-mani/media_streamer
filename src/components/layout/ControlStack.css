@@ -1,8 +1,3 @@
-/*
-  SYSTEMATIC CONTROL STACK
-  Optimized for Nested Card Architecture
-*/
-
 .control-stack {
     height: 100%;
     width: 100%;
@@ -10,190 +5,23 @@
     flex-direction: column;
     box-sizing: border-box;
     overflow: hidden;
+    background: transparent;
 }
 
 .card-stack-scroll {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 1rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+    /* Add padding to ensure content doesn't get hidden behind footer if float applied */
+    padding-bottom: 2rem;
 }
 
-.loading-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-}
-
-/* Master Card Container */
-.master-card {
-    margin-bottom: 0;
-}
-
-/* Device/Platform/Quality Lists */
-.device-list,
-.platform-list,
-.quality-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* Grids for Input/Channel/Preset Cards */
-.input-grid,
-.channel-grid,
-.preset-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-/* Individual Card Styles */
-.input-card,
-.channel-card,
-.preset-card {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.input-card:hover,
-.channel-card:hover,
-.preset-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-1px);
-}
-
-.input-card.selected,
-.channel-card.selected,
-.preset-card.selected {
-    background: rgba(74, 222, 128, 0.1);
-    border-color: rgba(74, 222, 128, 0.4);
-}
-
-/* Signal Status Variants */
-.input-card.has-signal {
-    border-left: 3px solid var(--accent-green);
-}
-
-.input-card.no-signal {
-    opacity: 0.6;
-    border-left: 3px solid #666;
-}
-
-/* Icon Containers */
-.input-icon,
-.channel-icon,
-.preset-icon {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Info Sections */
-.input-info,
-.channel-info,
-.preset-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
-}
-
-.input-port,
-.channel-name,
-.preset-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.input-status,
-.channel-desc,
-.preset-desc {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.input-status.live {
-    color: var(--accent-green);
-}
-
-.input-status.dead {
-    color: #666;
-}
-
-/* Selection Radio Buttons */
-.input-select,
-.channel-select,
-.preset-select {
-    flex-shrink: 0;
-}
-
-.radio-on {
-    color: var(--accent-green);
-}
-
-.radio-off {
-    color: var(--text-secondary);
-    opacity: 0.4;
-}
-
-/* Empty State */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 2rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-/* Scrollbar Styling */
-.card-stack-scroll::-webkit-scrollbar {
-    width: 6px;
-}
-
-.card-stack-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-}
-
-.card-stack-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-}
-
-.card-stack-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+/* Ensure consistent card sizing */
+.nested-card.level-1 {
+    width: 100%;
+    box-sizing: border-box;
 }
