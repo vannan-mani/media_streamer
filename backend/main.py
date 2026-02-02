@@ -122,26 +122,24 @@ def get_stream_stats():
             timestamp=time.time()
         )
     else:
-        # Mock data when not streaming
-        net_io = psutil.net_io_counters()
-        
+        # Strictly no mock: return zeros when not streaming
         return StreamStatsDTO(
-            bitrate=5800 + random.random() * 400,
-            fps=59.94,
-            droppedFrames=random.randint(0, 20),
+            bitrate=0.0,
+            fps=0.0,
+            droppedFrames=0,
             network=NetworkStats(
-                upload=random.uniform(10, 15),
-                rtt=random.uniform(40, 60),
-                drops=random.uniform(0, 0.3),
-                interfaceSpeed=1000
+                upload=0.0,
+                rtt=0.0,
+                drops=0.0,
+                interfaceSpeed=0
             ),
             encoding=EncodingHealth(
-                keyframes="stable",
-                gop="2.0s",
-                audioSync=random.randint(-15, 15),
-                codecHealth="nominal"
+                keyframes="inactive",
+                gop="0",
+                audioSync=0,
+                codecHealth="inactive"
             ),
-            youtubeIngest="excellent" if random.random() > 0.1 else "good",
+            youtubeIngest="offline",
             timestamp=time.time()
         )
 
