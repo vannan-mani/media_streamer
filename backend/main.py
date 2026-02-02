@@ -250,8 +250,9 @@ def get_sentinel_options_hierarchical():
             device_name = device_info.get('info', {}).get('name', f'Device {device_id}')
             
             # Use ACTUAL hardware inputs detected from the device
+            # FIX: inputs are at device_info level, not inside 'info'
             channels = []
-            device_inputs = device_info.get('info', {}).get('inputs', [])
+            device_inputs = device_info.get('inputs', [])
             
             if device_inputs:
                 # Device has input detection - use actual inputs
@@ -259,7 +260,7 @@ def get_sentinel_options_hierarchical():
                     port_name = inp.get('port', 'SDI 1')
                     # Extract channel number from port name (e.g., "SDI 1" -> 1)
                     try:
-                        ch_num = int(port_name.replace('SDI', '').strip())
+                        ch_num = int(port_name.replace('SDI', '').replace('Input', '').strip())
                     except:
                         ch_num = 1
                     
@@ -288,6 +289,19 @@ def get_sentinel_options_hierarchical():
                 "name": device_name,
                 "channels": channels
             }
+    
+    # Always add NDI source as placeholder (waiting/unavailable)
+    inputs["ndi"] = {
+        "id": "ndi",
+        "name": "NDI Source",
+        "channels": [{
+            "id": "ndi_1",
+            "channelNumber": 1,
+            "signalStatus": "waiting",
+            "format": None,
+            "selectable": False
+        }]
+    }
     
     return {
         "inputs": inputs,

@@ -8,46 +8,43 @@ interface EndpointMasterCardProps {
     onSelectStream: (streamId: string) => void;
 }
 
+/**
+ * Destination Master Card
+ * Progressive Disclosure: Shows all streams as compact tiles in a grid
+ * Logical grouping: YT streams together, FB streams together (with visual separator)
+ */
 const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({
     destinations,
     selectedStreamId,
     onSelectStream
 }) => {
-    const [expandedMaster, setExpandedMaster] = useState(true);
-    const [expandedPlatforms, setExpandedPlatforms] = useState<Record<string, boolean>>({});
-
+    const [isExpanded, setIsExpanded] = useState(true);
     const platformArray = Object.values(destinations);
-    const totalPlatforms = platformArray.length;
-    const totalStreams = platformArray.reduce((sum, platform) => sum + platform.streams.length, 0);
 
-    const togglePlatform = (platformId: string) => {
-        setExpandedPlatforms(prev => ({
-            ...prev,
-            [platformId]: !prev[platformId]
-        }));
+    // Get platform icon prefix
+    const getPlatformIcon = (platformId: string): string => {
+        if (platformId.includes('youtube') || platformId === 'youtube') return '▶';
+        if (platformId.includes('facebook') || platformId === 'facebook') return '📘';
+        return '📺';
     };
 
     return (
         <NestedCard
             title="Destination"
             level={1}
-            badge={`${totalPlatforms} Platforms • ${totalStreams} Streams`}
-            isExpanded={expandedMaster}
-            onToggle={() => setExpandedMaster(!expandedMaster)}
+            isExpanded={isExpanded}
+            onToggle={() => setIsExpanded(!isExpanded)}
         >
-            {platformArray.map(platform => (
-                <NestedCard
-                    key={platform.id}
-                    title={platform.name}
-                    level={2}
-                    badge={`${platform.streams.length} streams`}
-                    isExpanded={expandedPlatforms[platform.id] || false}
-                    onToggle={() => togglePlatform(platform.id)}
-                >
+            {platformArray.map((platform, platformIndex) => (
+                <React.Fragment key={platform.id || platformIndex}>
+                    {/* Platform divider (between platforms) */}
+                    {platformIndex > 0 && <div className="group-divider" />}
+
+                    {/* All streams from this platform as tiles */}
                     {platform.streams.map(stream => (
                         <NestedCard
                             key={stream.id}
-                            title={stream.name}
+                            title={`${getPlatformIcon(platform.id || '')} ${stream.name}`}
                             level={3}
                             isSelected={selectedStreamId === stream.id}
                             isSelectable={true}
@@ -57,7 +54,7 @@ const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({
                             }}
                         />
                     ))}
-                </NestedCard>
+                </React.Fragment>
             ))}
         </NestedCard>
     );

@@ -1,15 +1,20 @@
 import React from 'react';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import './NestedCard.css';
 
 interface NestedCardProps {
     title: string;
-    level: 1 | 2 | 3; // Master, Group, or Item
+    level: 1 | 2 | 3;
     badge?: string;
-    metadata?: Record<string, any>; // For displaying extra info (signal, bitrate, etc.)
+    metadata?: {
+        signal?: 'present' | 'none' | 'waiting';
+        format?: string;
+        bitrate?: number;
+        fps?: number;
+        description?: string;
+    };
     children?: React.ReactNode;
 
-    // Expansion (for Level 1 & 2)
+    // Expansion (for Level 1 only)
     isExpanded?: boolean;
     onToggle?: () => void;
 
@@ -27,80 +32,77 @@ const NestedCard: React.FC<NestedCardProps> = ({
     badge,
     metadata,
     children,
-    isExpanded = false,
+    isExpanded = true, // Default to expanded for Level 1
     onToggle,
     isSelected = false,
-    isSelectable = false,
+    isSelectable = true,
     onSelect,
     className = ''
 }) => {
     const isLeafCard = level === 3;
-    const hasChildren = Boolean(children);
+    const isWaiting = metadata?.signal === 'waiting';
+    const isDisabled = !isSelectable || isWaiting;
 
     const handleClick = () => {
-        if (isLeafCard && isSelectable && onSelect) {
+        if (isLeafCard && !isDisabled && onSelect) {
             onSelect();
-        } else if (hasChildren && onToggle) {
+        } else if (level === 1 && onToggle) {
             onToggle();
         }
     };
 
-    const renderMetadata = () => {
-        if (!metadata) return null;
+    // Build CSS classes
+    const cardClasses = [
+        'nested-card',
+        `level-${level}`,
+        isSelected ? 'selected' : '',
+        isDisabled && isLeafCard ? 'disabled' : '',
+        isWaiting ? 'waiting' : '',
+        className
+    ].filter(Boolean).join(' ');
 
-        return (
-            <div className="card-metadata">
-                {metadata.signal && (
-                    <span className={`signal-badge ${metadata.signal}`}>
-                        {metadata.signal === 'present' ? '●' : '○'}
-                    </span>
-                )}
-                {metadata.format && (
-                    <span className="format-text">{metadata.format}</span>
-                )}
-                {metadata.bitrate && (
-                    <span className="bitrate-text">{metadata.bitrate} kbps</span>
-                )}
-                {metadata.fps && (
-                    <span className="fps-text">{metadata.fps}fps</span>
-                )}
-            </div>
-        );
+    // Render signal indicator for Level 3 tiles
+    const renderSignal = () => {
+        if (!metadata?.signal) return null;
+        return <span className={`signal-dot ${metadata.signal}`} />;
     };
 
     return (
-        <div
-            className={`nested-card level-${level} ${isSelected ? 'selected' : ''} ${!isSelectable && isLeafCard ? 'disabled' : ''} ${className}`}
-        >
+        <div className={cardClasses}>
             <div
                 className="nested-card-header"
                 onClick={handleClick}
-                style={{ cursor: (isLeafCard && isSelectable) || hasChildren ? 'pointer' : 'default' }}
+                style={{ cursor: isLeafCard && !isDisabled ? 'pointer' : level === 1 ? 'pointer' : 'default' }}
             >
-                <div className="header-left">
-                    {/* Chevron for expandable cards (Level 1 & 2) */}
-                    {hasChildren && !isLeafCard && (
-                        isExpanded ? <ChevronDown size={level === 1 ? 20 : 16} /> : <ChevronRight size={level === 1 ? 20 : 16} />
-                    )}
+                {/* Level 1: Section header */}
+                {level === 1 && (
+                    <h3 className="card-title">{title}</h3>
+                )}
 
-                    {/* Checkmark for selected Level 3 cards */}
-                    {isLeafCard && isSelected && <Check size={16} className="check-icon" />}
-
-                    <h3 className={`card-title level-${level}-title`}>{title}</h3>
-                </div>
-
-                <div className="header-right">
-                    {badge && <span className="nested-badge">{badge}</span>}
-                    {renderMetadata()}
-                </div>
+                {/* Level 3: Compact tile content */}
+                {level === 3 && (
+                    <>
+                        <div className="tile-content">
+                            {renderSignal()}
+                            <span className="card-title">{title}</span>
+                        </div>
+                        {badge && <span className="tile-badge">{badge}</span>}
+                        {metadata?.format && <span className="tile-badge">{metadata.format}</span>}
+                        {metadata?.bitrate && <span className="tile-badge">{metadata.bitrate >= 1000 ? `${(metadata.bitrate / 1000).toFixed(1)}M` : `${metadata.bitrate}k`}</span>}
+                        {isWaiting && <span className="tile-badge">Waiting...</span>}
+                    </>
+                )}
             </div>
 
-            {/* Children for Level 1 & 2 cards */}
-            {hasChildren && isExpanded && (
+            {/* Children container for Level 1 (always visible when expanded) */}
+            {level === 1 && children && isExpanded && (
                 <div className="nested-card-body">
                     {children}
                 </div>
             )}
+
+            {/* Level 2 passes through children directly */}
+            {level === 2 && children}
         </div>
     );
 };

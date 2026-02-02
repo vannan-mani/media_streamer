@@ -1,267 +1,279 @@
-/* Modern Widget Cards - LIGHT GLASSMORPHISM THEME */
-/* Matches GlassCard.css styling with dark text on translucent white */
-
-/* Base card */
-.nested-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease;
-}
+/* Progressive Disclosure Cards - Apple Style */
+/* Compact tiles with in-place expansion */
 
 /* ================================================ */
-/* Level 1: MASTER CARD - Section Container */
+/* MASTER CONTAINER (Input/Destination/Encoding)   */
 /* ================================================ */
 .nested-card.level-1 {
     background: rgba(255, 255, 255, 0.9);
-    border: 2px solid rgba(0, 0, 0, 0.12);
+    border: 2px solid rgba(0, 0, 0, 0.1);
     border-radius: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .nested-card.level-1 .nested-card-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.nested-card.level-1 .nested-card-header h3,
 .nested-card.level-1 .card-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #1a1a2e !important;
+    color: #374151 !important;
+    margin: 0;
 }
 
 .nested-card.level-1 .nested-card-body {
-    padding: 14px;
-}
-
-/* ================================================ */
-/* Level 2: GROUP CARD - Device/Platform/Quality */
-/* ================================================ */
-.nested-card.level-2 {
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    margin-bottom: 14px;
-    margin-left: 0;
-}
-
-.nested-card.level-2 .nested-card-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    cursor: pointer;
-}
-
-.nested-card.level-2 .nested-card-header:hover {
-    background: rgba(0, 0, 0, 0.03);
-}
-
-.nested-card.level-2 .nested-card-header h3,
-.nested-card.level-2 .card-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #2d3748 !important;
-}
-
-.nested-card.level-2 .nested-card-body {
     padding: 12px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* ================================================ */
-/* Level 3: ITEM CARDS - Selectable Widgets */
+/* GROUP DIVIDER (Visual separator for YT|FB)      */
+/* ================================================ */
+.group-divider {
+    width: 1px;
+    background: rgba(0, 0, 0, 0.12);
+    margin: 4px 8px;
+    align-self: stretch;
+}
+
+/* ================================================ */
+/* COMPACT TILE (Collapsed State)                  */
 /* ================================================ */
 .nested-card.level-3 {
     background: rgba(255, 255, 255, 0.95);
-    border: 2px solid rgba(0, 0, 0, 0.12);
-    border-radius: 10px;
-    margin: 0;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    min-width: 100px;
+    max-width: 140px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .nested-card.level-3 .nested-card-header {
-    padding: 14px 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
 }
 
-.nested-card.level-3 .nested-card-header h3,
 .nested-card.level-3 .card-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: #1e293b !important;
+    margin: 0;
+    line-height: 1.2;
 }
 
-.nested-card.level-3:hover:not(.disabled) {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 122, 255, 0.4);
+/* Badge inside tile (1 input, 6Mbps, etc.) */
+.nested-card.level-3 .tile-badge {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* HOVER STATE */
+.nested-card.level-3:hover:not(.disabled):not(.selected) {
+    background: #ffffff;
+    border-color: rgba(59, 130, 246, 0.4);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* SELECTED STATE - Green accent */
+/* SELECTED STATE */
 .nested-card.level-3.selected {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(74, 222, 128, 0.08) 100%);
     border: 2px solid #22c55e;
-    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
 }
 
-.nested-card.level-3.selected .nested-card-header h3,
 .nested-card.level-3.selected .card-title {
     color: #15803d !important;
+}
+
+.nested-card.level-3.selected .tile-badge {
+    color: #16a34a;
+}
+
+/* Check indicator */
+.nested-card.level-3.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 0.75rem;
     font-weight: 700;
+    color: #22c55e;
 }
 
-.nested-card.level-3.selected:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 16px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0, 0, 0, 0.12);
+/* DISABLED / WAITING STATE */
+.nested-card.level-3.disabled,
+.nested-card.level-3.waiting {
+    background: rgba(240, 240, 240, 0.8);
+    border-color: rgba(0, 0, 0, 0.05);
+    cursor: not-allowed;
 }
 
-/* DISABLED STATE */
-.nested-card.level-3.disabled {
-    background: rgba(240, 240, 240, 0.7);
-    border-color: rgba(0, 0, 0, 0.06);
-    opacity: 0.5;
-    cursor: not-allowed !important;
+.nested-card.level-3.disabled .card-title,
+.nested-card.level-3.waiting .card-title {
+    color: #9ca3af !important;
 }
 
-.nested-card.level-3.disabled:hover {
-    transform: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+.nested-card.level-3.waiting .tile-badge {
+    color: #d1d5db;
+    font-style: italic;
+}
+
+/* SIGNAL INDICATOR */
+.signal-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.signal-dot.present {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.signal-dot.none {
+    background: #d1d5db;
+}
+
+.signal-dot.waiting {
+    background: #fbbf24;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 /* ================================================ */
-/* Header Layout */
+/* EXPANDED STATE (Progressive Disclosure)         */
 /* ================================================ */
+.nested-card.level-3.expanded {
+    min-width: 180px;
+    max-width: 240px;
+}
+
+.nested-card.level-3.expanded .nested-card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    align-items: flex-start;
+    text-align: left;
+}
+
+.nested-card.level-3 .nested-card-body {
+    display: none;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.nested-card.level-3.expanded .nested-card-body {
+    display: block;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+
+    to {
+        opacity: 1;
+        max-height: 200px;
+    }
+}
+
+/* Detail row inside expanded card */
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.8rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* ================================================ */
+/* HIDDEN - Remove Level 2 (no dropdown groups)    */
+/* ================================================ */
+.nested-card.level-2 {
+    display: contents;
+    /* Pass through, no visual container */
+}
+
+/* ================================================ */
+/* LAYOUT HELPERS                                   */
+/* ================================================ */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .nested-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-/* Title - DARK TEXT */
-.card-title,
-.nested-card-header h3 {
-    margin: 0;
-    color: #1e293b !important;
-}
-
-/* Checkmark for selected */
-.check-icon {
-    color: #22c55e;
-    filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.5));
+/* Hide chevrons - not using dropdown style */
+svg.chevron {
+    display: none;
 }
 
 /* ================================================ */
-/* Badge Styling */
+/* RESPONSIVE                                       */
 /* ================================================ */
-.nested-badge {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    color: #2563eb;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-/* ================================================ */
-/* Metadata (Signal, Format, Bitrate) */
-/* ================================================ */
-.card-metadata {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    font-size: 0.8rem;
-}
-
-.signal-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 600;
-}
-
-.signal-badge.present {
-    color: #16a34a;
-}
-
-.signal-badge.present::before {
-    content: '●';
-}
-
-.signal-badge.none {
-    color: #9ca3af;
-}
-
-.signal-badge.none::before {
-    content: '○';
-}
-
-.format-text,
-.bitrate-text,
-.fps-text {
-    color: #64748b;
-    font-weight: 500;
-}
-
-/* ================================================ */
-/* Chevron Icons */
-/* ================================================ */
-svg {
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-    color: #64748b;
-}
-
-/* ================================================ */
-/* Animation */
-/* ================================================ */
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
+@media (max-width: 600px) {
+    .nested-card.level-3 {
+        min-width: 80px;
+        max-width: 110px;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.nested-card-body {
-    animation: slideDown 0.2s ease-out;
-}
-
-/* ================================================ */
-/* Responsive */
-/* ================================================ */
-@media (max-width: 768px) {
-    .nested-card.level-2 .nested-card-body {
-        grid-template-columns: 1fr;
+    .nested-card.level-3 .card-title {
+        font-size: 0.75rem;
     }
 }

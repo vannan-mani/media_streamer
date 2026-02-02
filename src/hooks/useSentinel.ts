@@ -39,7 +39,7 @@ export interface QualityGroup {
 export interface InputChannel {
     id: string;
     channelNumber: number;
-    signalStatus: 'present' | 'none';
+    signalStatus: 'present' | 'none' | 'waiting';
     format: string | null;
     selectable: boolean;
 }
