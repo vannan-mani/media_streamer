@@ -242,40 +242,49 @@ def get_sentinel_options_hierarchical():
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail="stream_config.json not found")
     
-    # Build inputs from hardware probe + channels
+    # Build inputs from hardware probe (use ACTUAL hardware inputs, not config)
     inputs = {}
     if sentinel_service:
         devices = sentinel_service.hardware_registry
         for device_id, device_info in devices.items():
             device_name = device_info.get('info', {}).get('name', f'Device {device_id}')
             
-            # Determine which channels this device has
-            device_key = 'default'
-            if 'mini' in device_name.lower():
-                device_key = 'decklink_mini'
-            elif '4k' in device_name.lower():
-                device_key = 'decklink_4k'
-            
-            channel_nums = stream_config['device_channels'].get(device_key, 
-                                stream_config['device_channels']['default'])
-            
-            # Build channel list for this device
+            # Use ACTUAL hardware inputs detected from the device
             channels = []
-            for ch_num in channel_nums:
-                # Get signal status from device (if available)
-                signal_present = device_info.get('status') == 'IDLE' or device_info.get('status') == 'STREAMING'
+            device_inputs = device_info.get('info', {}).get('inputs', [])
+            
+            if device_inputs:
+                # Device has input detection - use actual inputs
+                for inp in device_inputs:
+                    port_name = inp.get('port', 'SDI 1')
+                    # Extract channel number from port name (e.g., "SDI 1" -> 1)
+                    try:
+                        ch_num = int(port_name.replace('SDI', '').strip())
+                    except:
+                        ch_num = 1
+                    
+                    channels.append({
+                        "id": f"{device_id}_ch{ch_num}",
+                        "channelNumber": ch_num,
+                        "signalStatus": "present" if inp.get('signal_detected') else "none",
+                        "format": inp.get('format'),
+                        "selectable": inp.get('signal_detected', False)
+                    })
+            else:
+                # Fallback: Device doesn't report inputs, create single channel
+                signal_present = device_info.get('status') in ['IDLE', 'STREAMING']
                 format_info = device_info.get('info', {}).get('display_mode', 'Unknown')
                 
                 channels.append({
-                    "id": f"{device_id}_ch{ch_num}",
-                    "channelNumber": ch_num,
+                    "id": f"{device_id}_ch1",
+                    "channelNumber": 1,
                     "signalStatus": "present" if signal_present else "none",
                     "format": format_info if signal_present else None,
                     "selectable": signal_present
                 })
             
             inputs[device_id] = {
-                "id": device_id,
+                "id": str(device_id),
                 "name": device_name,
                 "channels": channels
             }

@@ -1,99 +1,117 @@
-/* Base nested card styles with 3-level hierarchy support */
+/* Modern Widget Card Design - Mobile App Style */
 
+/* Base card styling - higher visibility */
 .nested-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(12px);
 }
 
-/* Level 1: Master Cards - Largest, most prominent */
+/* Level 1: Section Headers (minimal card style) */
 .nested-card.level-1 {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
-    margin-bottom: 16px;
+    background: transparent;
+    border: none;
+    margin-bottom: 24px;
 }
 
 .nested-card.level-1 .nested-card-header {
-    padding: 16px 20px;
-    font-size: 1.1rem;
-    font-weight: 600;
+    padding: 12px 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: default;
 }
 
-/* Level 2: Group Cards - Medium, container for items */
+/* Hide chevron for Level 1 */
+.nested-card.level-1 .header-left svg {
+    display: none;
+}
+
+/* Level 2: Invisible grouping containers */
 .nested-card.level-2 {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    margin-bottom: 10px;
-    margin-left: 16px;
+    background: transparent;
+    border: none;
+    margin-bottom: 16px;
+    margin-left: 0;
 }
 
 .nested-card.level-2 .nested-card-header {
-    padding: 12px 16px;
+    padding: 8px 0 12px 0;
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
 }
 
-/* Level 3: Item Cards - Compact, selectable */
+.nested-card.level-2 .nested-card-body {
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+/* Level 3: WIDGET CARDS - The stars of the show */
 .nested-card.level-3 {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    margin-bottom: 6px;
-    margin-left: 32px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    margin-bottom: 0;
+    margin-left: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nested-card.level-3:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .nested-card.level-3 .nested-card-header {
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    font-weight: 400;
+    padding: 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
 }
 
-/* Selection state for Level 3 cards */
+/* Selected state - Vibrant green */
 .nested-card.level-3.selected {
-    background: rgba(74, 222, 128, 0.15);
-    border: 1px solid rgba(74, 222, 128, 0.4);
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(74, 222, 128, 0.15) 100%);
+    border: 2px solid rgb(74, 222, 128);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .nested-card.level-3.selected .nested-card-header {
-    color: rgb(74, 222, 128);
-}
-
-/* Disabled state for Level 3 cards */
-.nested-card.level-3.disabled {
-    opacity: 0.5;
-    cursor: not-allowed !important;
-}
-
-.nested-card.level-3.disabled .nested-card-header {
-    cursor: not-allowed !important;
-}
-
-/* Hover effects */
-.nested-card.level-1:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.nested-card.level-2:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.nested-card.level-3:not(.disabled):hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateX(2px);
+    color: rgb(255, 255, 255);
 }
 
 .nested-card.level-3.selected:hover {
-    background: rgba(74, 222, 128, 0.2);
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.3) 0%, rgba(74, 222, 128, 0.2) 100%);
+    transform: translateY(-2px) scale(1.02);
 }
 
-/* Header styles */
+/* Disabled state */
+.nested-card.level-3.disabled {
+    opacity: 0.4;
+    cursor: not-allowed !important;
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.nested-card.level-3.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Header layout */
 .nested-card-header {
     display: flex;
     justify-content: space-between;
@@ -105,47 +123,98 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
 }
 
 .header-right {
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-/* Title sizing per level */
-.card-title {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.level-1-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.level-2-title {
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-.level-3-title {
-    font-size: 0.9rem;
-    font-weight: 400;
-}
-
-/* Check icon for selected Level 3 cards */
-.check-icon {
-    color: rgb(74, 222, 128);
     flex-shrink: 0;
 }
 
-/* Card body (children container) */
-.nested-card-body {
-    padding: 0 1.25rem 1rem 1.25rem;
-    animation: slideDown 0.2s ease-out;
+/* Title */
+.card-title {
+    margin: 0;
+    color: inherit;
+    line-height: 1.4;
 }
 
+/* Checkmark icon for selected cards */
+.check-icon {
+    color: rgb(74, 222, 128);
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.5));
+}
+
+/* Badge styling */
+.nested-badge {
+    background: rgba(96, 165, 250, 0.2);
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    color: rgb(147, 197, 253);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Metadata display */
+.card-metadata {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.signal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.signal-badge.present {
+    color: rgb(74, 222, 128);
+}
+
+.signal-badge.present::before {
+    content: '●';
+    font-size: 0.9rem;
+}
+
+.signal-badge.none {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.signal-badge.none::before {
+    content: '○';
+    font-size: 0.9rem;
+}
+
+.format-text,
+.bitrate-text,
+.fps-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Card body */
+.nested-card-body {
+    padding: 0 16px 16px 16px;
+}
+
+.nested-card.level-1 .nested-card-body {
+    padding: 0;
+}
+
+/* Animation for body expand/collapse */
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -158,50 +227,48 @@
     }
 }
 
-.nested-card.level-1 .nested-card-body {
-    padding: 12px 16px 16px 16px;
+.nested-card-body {
+    animation: slideDown 0.25s ease-out;
 }
 
-/* Badge */
-.nested-badge {
-    background: rgba(59, 130, 246, 0.2);
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    color: rgb(96, 165, 250);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* Metadata display (signal, format, bitrate, fps) */
-.card-metadata {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-}
-
-.signal-badge {
-    font-size: 12px;
-}
-
-.signal-badge.present {
-    color: rgb(74, 222, 128);
-}
-
-.signal-badge.none {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.format-text,
-.bitrate-text,
-.fps-text {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-}
-
-/* Chevron icons */
-svg {
+/* Chevron icons - subtle for Level 2, hidden for Level 1 */
+svg.chevron-icon {
     flex-shrink: 0;
     transition: transform 0.2s ease;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.nested-card.level-2 svg.chevron-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Responsive grid for smaller screens */
+@media (max-width: 768px) {
+    .nested-card.level-2 .nested-card-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Glassmorphism effect on hover */
+.nested-card.level-3::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.nested-card.level-3:hover::before {
+    opacity: 1;
+}
+
+.nested-card.level-3.selected::before {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0) 100%);
+    opacity: 1;
 }
