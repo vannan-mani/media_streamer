@@ -47,7 +47,7 @@ echo ""
 # Step 5: Install Python dependencies
 echo -e "${YELLOW}Step 5: Installing Python dependencies...${NC}"
 cd backend
-pip3 install -r requirements.txt --quiet
+pip3 install -r requirements.txt --break-system-packages --quiet
 cd ..
 echo -e "${GREEN}✓ Python dependencies installed${NC}"
 echo ""
