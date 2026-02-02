@@ -1,6 +1,6 @@
 /*
   SYSTEMATIC CONTROL STACK
-  Optimized for Logical Grouping & Symmetrical Sizing
+  Optimized for Nested Card Architecture
 */
 
 .control-stack {
@@ -8,131 +8,192 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1.5vh;
-    /* Gap between the two GlassCards */
     box-sizing: border-box;
     overflow: hidden;
 }
 
-/* Ensure each section occupies 50% height */
-.control-stack>* {
+.card-stack-scroll {
     flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.control-section {
-    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    padding: 1vh;
-    box-sizing: border-box;
+    gap: 1rem;
 }
 
-.section-header {
-    flex: 0 0 auto;
+.loading-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.5vh 0.8vw;
-    margin-bottom: 0.8vh;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
-    border-left: 3px solid var(--color-primary);
+    justify-content: center;
+    height: 100%;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
 }
 
-.section-header h3 {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
+/* Master Card Container */
+.master-card {
+    margin-bottom: 0;
 }
 
-/* Grids - ENFORCED SYMMETRY */
+/* Device/Platform/Quality Lists */
+.device-list,
+.platform-list,
+.quality-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Grids for Input/Channel/Preset Cards */
 .input-grid,
+.channel-grid,
 .preset-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 0.6vh;
-    flex: 1;
-    min-height: 0;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
 }
 
-/* SYMMETRICAL CONTROL CARDS */
-.control-item-card {
-    position: relative;
+/* Individual Card Styles */
+.input-card,
+.channel-card,
+.preset-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.input-card:hover,
+.channel-card:hover,
+.preset-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+.input-card.selected,
+.channel-card.selected,
+.preset-card.selected {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
+/* Signal Status Variants */
+.input-card.has-signal {
+    border-left: 3px solid var(--accent-green);
+}
+
+.input-card.no-signal {
+    opacity: 0.6;
+    border-left: 3px solid #666;
+}
+
+/* Icon Containers */
+.input-icon,
+.channel-icon,
+.preset-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Info Sections */
+.input-info,
+.channel-info,
+.preset-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.input-port,
+.channel-name,
+.preset-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.input-status,
+.channel-desc,
+.preset-desc {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.input-status.live {
+    color: var(--accent-green);
+}
+
+.input-status.dead {
+    color: #666;
+}
+
+/* Selection Radio Buttons */
+.input-select,
+.channel-select,
+.preset-select {
+    flex-shrink: 0;
+}
+
+.radio-on {
+    color: var(--accent-green);
+}
+
+.radio-off {
+    color: var(--text-secondary);
+    opacity: 0.4;
+}
+
+/* Empty State */
+.empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0.6vh 0.4vw;
-    border-radius: 8px;
-    border: 2px solid rgba(0, 0, 0, 0.08);
+    gap: 0.5rem;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Scrollbar Styling */
+.card-stack-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-stack-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.card-stack-scroll::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
-    min-height: 0;
-    overflow: hidden;
-    text-align: center;
-    transition: all 0.15s ease-out;
+    border-radius: 3px;
 }
 
-.card-name {
-    font-size: clamp(9px, 0.75vw, 11px);
-    font-weight: 800;
-    line-height: 1.1;
-    text-transform: uppercase;
-}
-
-.card-meta {
-    font-size: 8px;
-    font-weight: 600;
-    opacity: 0.5;
-    margin-top: 2px;
-}
-
-/* Active States */
-.control-item-card.active {
-    background: rgba(255, 255, 255, 0.5);
-    border-width: 2.5px;
-}
-
-.input-card.active {
-    border-color: #007AFF;
-    box-shadow: 0 0 10px rgba(0, 122, 255, 0.1);
-}
-
-.preset-card.active {
-    border-color: #AF52DE;
-    box-shadow: 0 0 10px rgba(175, 82, 222, 0.1);
-}
-
-.active-dot {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    font-size: 7px;
-}
-
-.input-card.active .active-dot {
-    color: #007AFF;
-}
-
-.preset-card.active .active-dot {
-    color: #AF52DE;
-}
-
-.card-icon {
-    margin-bottom: 2px;
-    opacity: 0.6;
-}
-
-.input-card.active .card-icon {
-    opacity: 1;
-    color: #007AFF;
-}
-
-.preset-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+.card-stack-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }

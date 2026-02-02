@@ -18,25 +18,29 @@ const StatusStrip: React.FC = () => {
             label: 'CPU',
             value: `${Math.round(healthData.cpu)}%`,
             data: history.map(h => h.cpu),
-            color: '#007AFF'
+            color: '#007AFF',
+            suffix: '%'
         },
         {
             label: 'GPU',
             value: `${Math.round(healthData.gpu)}%`,
             data: history.map(h => h.gpu),
-            color: '#AF52DE'
+            color: '#AF52DE',
+            suffix: '%'
         },
         {
             label: 'TEMP',
             value: `${Math.round(healthData.temperature)}°C`,
             data: history.map(h => h.temperature),
-            color: '#FF9500'
+            color: '#FF9500',
+            suffix: '°'
         },
         {
             label: 'MEM',
             value: `${Math.round((healthData.memory.used / healthData.memory.total) * 100)}%`,
             data: history.map(h => (h.memory.used / h.memory.total) * 100),
-            color: '#34C759'
+            color: '#34C759',
+            suffix: '%'
         }
     ];
 
@@ -63,6 +67,8 @@ const StatusStrip: React.FC = () => {
                                 <Sparkline
                                     data={metric.data}
                                     color={metric.color}
+                                    suffix={metric.suffix}
+                                    showAxis={true}
                                 />
                             </div>
                         </div>

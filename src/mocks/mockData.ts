@@ -8,6 +8,13 @@ export interface HealthData {
     timestamp: number;
 }
 
+export interface EncodingHealth {
+    keyframes: 'stable' | 'unstable';
+    gop: string;
+    audioSync: number; // ms
+    codecHealth: 'nominal' | 'warning' | 'critical';
+}
+
 export interface StreamStats {
     bitrate: number;
     fps: number;
@@ -16,7 +23,10 @@ export interface StreamStats {
         upload: number;
         rtt: number;
         drops: number;
+        interfaceSpeed: number; // Mbps
     };
+    encoding: EncodingHealth;
+    youtubeIngest: 'excellent' | 'good' | 'poor' | 'unstable';
     timestamp: number;
 }
 
@@ -87,7 +97,15 @@ export const generateStreamStats = (): StreamStats => ({
         upload: 11 + Math.random() * 3,
         rtt: 40 + Math.random() * 20,
         drops: Math.random() * 0.3,
+        interfaceSpeed: 1000, // 1Gbps fixed link
     },
+    encoding: {
+        keyframes: Math.random() > 0.05 ? 'stable' : 'unstable',
+        gop: '2.0s',
+        audioSync: Math.floor(Math.random() * 30) - 15,
+        codecHealth: 'nominal',
+    },
+    youtubeIngest: Math.random() > 0.1 ? 'excellent' : 'good',
     timestamp: Date.now(),
 });
 

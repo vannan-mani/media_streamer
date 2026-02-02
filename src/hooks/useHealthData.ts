@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { generateHealthData, type HealthData } from '../mocks/mockData';
+import { type HealthData } from '../mocks/mockData';
 
 interface UseHealthDataOptions {
     updateInterval?: number; // milliseconds
@@ -8,36 +8,38 @@ interface UseHealthDataOptions {
 
 export const useHealthData = (options: UseHealthDataOptions = {}) => {
     const { updateInterval = 2000, enabled = true } = options;
-    const [healthData, setHealthData] = useState<HealthData>(generateHealthData());
+    const [healthData, setHealthData] = useState<HealthData | null>(null);
     const [history, setHistory] = useState<HealthData[]>([]);
-    const wsRef = useRef<WebSocket | null>(null);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<any>(null);
 
     useEffect(() => {
         if (!enabled) return;
 
-        // Start with mock data (WebSocket server not available)
-        const startMockUpdates = () => {
-            intervalRef.current = setInterval(() => {
-                const newData = generateHealthData();
-                setHealthData(newData);
-                setHistory((prev) => [...prev.slice(-29), newData]);
-            }, updateInterval);
+        const fetchData = async () => {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                setHealthData(data);
+                setHistory((prev) => [...prev.slice(-29), data]);
+            } catch (error) {
+                console.error("Failed to fetch health data:", error);
+            }
         };
 
-        // Use mock data by default
-        startMockUpdates();
+        intervalRef.current = setInterval(fetchData, updateInterval);
+        fetchData(); // Initial fetch
 
-        // Cleanup function
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
         };
     }, [enabled, updateInterval]);
 
-    return { healthData, history };
+    // Fallback logic to prevent breaking UI if data is null
+    const currentHealth = healthData || (history.length > 0 ? history[history.length - 1] : {
+        cpu: 0, gpu: 0, temperature: 0, memory: { used: 0, total: 16 }, timestamp: Date.now()
+    } as HealthData);
+
+    return { healthData: currentHealth, history };
 };

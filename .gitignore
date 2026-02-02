@@ -1,24 +1,54 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.gemini/
+
 # Logs
-logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+logs/
+server.log
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Deployment temporary files
+*.zip
+*.tar.gz
+deploy_finish.ps1
+deploy_linux.ps1
+deploy_now.ps1
+deploy_quick.ps1
+deploy_remote.ps1
+deploy_simple.ps1
+deploy_ubuntu.ps1
+manual_deploy.ps1
+quick_deploy.ps1
+remote_start.ps1
+restart_server.ps1
+stop_server.ps1
+stop_server.sh
+start_server.sh
+-C
+
+# Environment
+.env
+.env.local
+
+# Test files
+*.test.js
+*.spec.js

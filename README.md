@@ -132,6 +132,11 @@ npm run dev
 npm run build
 ```
 
+### Restart Local Server (Utility)
+```powershell
+.\restart_server.ps1
+```
+
 ### Deploy to Remote
 ```powershell
 npm run deploy

@@ -12,6 +12,8 @@
     "deploy:ps": "powershell -ExecutionPolicy Bypass -File deploy-auto.ps1"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
+    "d3": "^7.9.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

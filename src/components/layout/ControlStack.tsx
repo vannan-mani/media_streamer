@@ -1,60 +1,94 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import './ControlStack.css';
-import GlassCard from '../common/GlassCard';
-import { Camera } from 'lucide-react';
-import { mockInputs, mockEndpoints } from '../../mocks/mockData';
+import { useSentinel } from '../../hooks/useSentinel';
+
+import InputMasterCard from '../cards/InputMasterCard';
+import EndpointMasterCard from '../cards/EndpointMasterCard';
+import EncodingMasterCard from '../cards/EncodingMasterCard';
+import ActionFooter from '../cards/ActionFooter';
 
 const ControlStack: React.FC = () => {
-    const activeEndpoint = mockEndpoints[0];
+    // 1. Get State & Methods from Hook
+    const {
+        state,
+        endpoints,
+        presetsGrouped,
+        loading,
+        setIntent,
+        setConfiguration,
+        isConfigurationComplete
+    } = useSentinel();
+
+    // 2. Derive Current Selections
+    const selectedDeviceId = state?.settings?.selected_device_id ?? 0;
+    const selectedChannelId = state?.settings?.selected_channel_id ?? '';
+    const selectedPresetId = state?.settings?.selected_preset_id ?? '';
+    const intent = state?.intent ?? 'DISABLED';
+    const systemStatus = state?.system_status ?? 'Initializing...';
+
+    // 3. Hardware List (Flattened from Registry)
+    const devices = useMemo(() => {
+        if (!state?.hardware) return [];
+        return Object.values(state.hardware).map((h: any) => ({
+            ...h.info,
+            status: h.status
+        })).sort((a, b) => a.device_number - b.device_number);
+    }, [state?.hardware]);
+
+    // 4. Handlers
+    const handleInputSelect = (id: number) => {
+        setConfiguration(id, selectedChannelId, selectedPresetId);
+    };
+
+    const handleChannelSelect = (id: string) => {
+        setConfiguration(selectedDeviceId, id, selectedPresetId);
+    };
+
+    const handlePresetSelect = (id: string) => {
+        setConfiguration(selectedDeviceId, selectedChannelId, id);
+    };
+
+    const handleToggle = () => {
+        const newIntent = intent === 'AUTO_STREAM' ? 'DISABLED' : 'AUTO_STREAM';
+        setIntent(newIntent);
+    };
+
+    if (loading && !state) {
+        return <div className="loading-container">CONNECTING TO SENTINEL...</div>;
+    }
 
     return (
         <div className="control-stack">
-            {/* 1. INPUT GROUP CARD */}
-            <GlassCard>
-                <div className="control-section">
-                    <div className="section-header">
-                        <h3>INPUT SOURCES</h3>
-                    </div>
-                    <div className="input-grid">
-                        {mockInputs.map(input => (
-                            <div key={input.id} className={`control-item-card input-card ${input.active ? 'active' : ''}`}>
-                                {input.active && <div className="active-dot">●</div>}
-                                <div className="card-icon">
-                                    <Camera size={14} />
-                                </div>
-                                <div className="card-content">
-                                    <div className="card-name">{input.name}</div>
-                                    <div className="card-meta">{input.type} — {input.format}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </GlassCard>
+            <div className="card-stack-scroll">
+                {/* 1. Input Source */}
+                <InputMasterCard
+                    devices={devices}
+                    selectedDeviceId={selectedDeviceId}
+                    onSelect={handleInputSelect}
+                />
 
-            {/* 2. PRESET GROUP CARD (YOUTUBE LIVE) */}
-            <GlassCard>
-                <div className="control-section">
-                    <div className="section-header" style={{ borderColor: '#FF0000' }}>
-                        <h3>YOUTUBE LIVE</h3>
-                    </div>
-                    <div className="preset-section">
-                        <div className="preset-grid">
-                            {activeEndpoint.presets.map(preset => (
-                                <div key={preset.id} className={`control-item-card preset-card ${preset.active ? 'active' : ''}`}>
-                                    {preset.active && <div className="active-dot">●</div>}
-                                    <div className="card-content">
-                                        <div className="card-name">{preset.name}</div>
-                                        <div className="card-meta">
-                                            {preset.bitrate} kbps — {preset.codec}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </GlassCard>
+                {/* 2. Destination Endpoint */}
+                <EndpointMasterCard
+                    endpoints={endpoints}
+                    selectedChannelId={selectedChannelId}
+                    onSelect={handleChannelSelect}
+                />
+
+                {/* 3. Encoding Preset */}
+                <EncodingMasterCard
+                    presets={presetsGrouped}
+                    selectedPresetId={selectedPresetId}
+                    onSelect={handlePresetSelect}
+                />
+            </div>
+
+            {/* 4. Action Footer (Fixed Bottom) - Only enable if all selections are made */}
+            <ActionFooter
+                intent={intent}
+                status={systemStatus}
+                onToggle={handleToggle}
+                canGoLive={isConfigurationComplete}
+            />
         </div>
     );
 };

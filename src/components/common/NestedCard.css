@@ -1,0 +1,109 @@
+/* NestedCard Component Styles */
+
+.nested-card {
+    margin-bottom: 1rem;
+}
+
+.nested-card.master-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.nested-card.sub-card {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+.nested-card.sub-card::before {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--glass-border);
+}
+
+.nested-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.nested-card-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-left svg {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.nested-card-header h3 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.nested-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    letter-spacing: 0.5px;
+}
+
+.nested-card-body {
+    padding: 0 1.25rem 1rem 1.25rem;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Sub-card specific styling */
+.sub-card .nested-card-header {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+.sub-card .nested-card-header h3 {
+    font-size: 0.8rem;
+    text-transform: none;
+    font-weight: 500;
+}
+
+.sub-card .nested-card-body {
+    padding: 0.5rem 0 0.5rem 2rem;
+}

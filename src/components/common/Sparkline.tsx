@@ -1,170 +1,210 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import * as d3 from 'd3';
 
 interface SparklineProps {
     data: number[];
-    width?: number;
-    height?: number;
     color?: string;
+    showAxis?: boolean;
+    suffix?: string;
+    showGrid?: boolean;
     showThreshold?: boolean;
     thresholdValue?: number;
-    showGrid?: boolean;
 }
 
 const Sparkline: React.FC<SparklineProps> = ({
     data,
-    width = 0,
-    height = 0,
     color = 'rgba(0, 122, 255, 1)',
+    showAxis = true,
+    suffix = '',
+    showGrid = true,
     showThreshold = false,
     thresholdValue = 75,
-    showGrid = true,
 }) => {
-    const svgRef = React.useRef<SVGSVGElement>(null);
-    const [dimensions, setDimensions] = React.useState({ width: 100, height: 40 });
-    const resizeTimeoutRef = React.useRef<number | null>(null);
-    const gradientId = `sparkline-gradient-${React.useId()}`;
+    const svgRef = useRef<SVGSVGElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
-        if (width !== 0 && height !== 0) {
-            setDimensions({ width, height });
-            return;
+    useEffect(() => {
+        if (!svgRef.current || !containerRef.current || !data || data.length < 2) return;
+
+        const container = containerRef.current;
+        const svg = d3.select(svgRef.current);
+
+        // Clear previous content
+        svg.selectAll('*').remove();
+
+        // Get container dimensions
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        if (containerWidth <= 0 || containerHeight <= 0) return;
+
+        // Set margins
+        const margin = {
+            top: 2,
+            right: 2,
+            bottom: 2,
+            left: showAxis ? 20 : 2
+        };
+
+        const width = containerWidth - margin.left - margin.right;
+        const height = containerHeight - margin.top - margin.bottom;
+
+        if (width <= 0 || height <= 0) return;
+
+        // Create scales
+        const xScale = d3.scaleLinear()
+            .domain([0, data.length - 1])
+            .range([0, width]);
+
+        const yScale = d3.scaleLinear()
+            .domain([d3.min(data) as number, d3.max(data) as number])
+            .range([height, 0])
+            .nice();
+
+        // Create main group
+        const g = svg.append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Create gradient
+        const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
+        const gradient = svg.append('defs')
+            .append('linearGradient')
+            .attr('id', gradientId)
+            .attr('x1', '0%')
+            .attr('y1', '0%')
+            .attr('x2', '0%')
+            .attr('y2', '100%');
+
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', color)
+            .attr('stop-opacity', 0.3);
+
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', color)
+            .attr('stop-opacity', 0.01);
+
+        // Grid lines
+        if (showGrid) {
+            g.append('line')
+                .attr('x1', 0)
+                .attr('y1', 0)
+                .attr('x2', width)
+                .attr('y2', 0)
+                .attr('stroke', 'currentColor')
+                .attr('stroke-width', 0.5)
+                .attr('stroke-dasharray', '2,2')
+                .attr('opacity', 0.1);
+
+            g.append('line')
+                .attr('x1', 0)
+                .attr('y1', height)
+                .attr('x2', width)
+                .attr('y2', height)
+                .attr('stroke', 'currentColor')
+                .attr('stroke-width', 0.5)
+                .attr('opacity', 0.1);
         }
 
-        const svg = svgRef.current;
-        if (!svg || !svg.parentElement) return;
+        // Axis labels
+        if (showAxis) {
+            const maxVal = d3.max(data) as number;
+            const minVal = d3.min(data) as number;
 
-        const updateDimensions = (entries: ResizeObserverEntry[]) => {
-            if (resizeTimeoutRef.current) {
-                clearTimeout(resizeTimeoutRef.current);
+            g.append('text')
+                .attr('x', -4)
+                .attr('y', 4)
+                .attr('text-anchor', 'end')
+                .attr('font-size', '7px')
+                .attr('font-weight', '900')
+                .attr('fill', 'currentColor')
+                .attr('opacity', 0.5)
+                .text(`${Math.round(maxVal)}${suffix}`);
+
+            g.append('text')
+                .attr('x', -4)
+                .attr('y', height - 1)
+                .attr('text-anchor', 'end')
+                .attr('font-size', '7px')
+                .attr('font-weight', '900')
+                .attr('fill', 'currentColor')
+                .attr('opacity', 0.5)
+                .text(`${Math.round(minVal)}${suffix}`);
+        }
+
+        // Threshold line
+        if (showThreshold && thresholdValue) {
+            g.append('line')
+                .attr('x1', 0)
+                .attr('y1', yScale(thresholdValue))
+                .attr('x2', width)
+                .attr('y2', yScale(thresholdValue))
+                .attr('stroke', 'rgba(255, 59, 48, 0.4)')
+                .attr('stroke-width', 1)
+                .attr('stroke-dasharray', '2,2');
+        }
+
+        // Create line generator with curve
+        const line = d3.line<number>()
+            .x((_, i) => xScale(i))
+            .y(d => yScale(d))
+            .curve(d3.curveCatmullRom.alpha(0.5));
+
+        // Create area generator
+        const area = d3.area<number>()
+            .x((_, i) => xScale(i))
+            .y0(height)
+            .y1(d => yScale(d))
+            .curve(d3.curveCatmullRom.alpha(0.5));
+
+        // Draw area
+        g.append('path')
+            .datum(data)
+            .attr('fill', `url(#${gradientId})`)
+            .attr('d', area);
+
+        // Draw line
+        g.append('path')
+            .datum(data)
+            .attr('fill', 'none')
+            .attr('stroke', color)
+            .attr('stroke-width', 1.5)
+            .attr('stroke-linecap', 'round')
+            .attr('stroke-linejoin', 'round')
+            .attr('d', line);
+
+        // Draw last point
+        const lastIndex = data.length - 1;
+        g.append('circle')
+            .attr('cx', xScale(lastIndex))
+            .attr('cy', yScale(data[lastIndex]))
+            .attr('r', 2)
+            .attr('fill', color);
+
+    }, [data, color, showAxis, suffix, showGrid, showThreshold, thresholdValue]);
+
+    // Resize observer
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const resizeObserver = new ResizeObserver(() => {
+            // Trigger re-render by updating a dummy state or calling the render effect
+            if (svgRef.current && containerRef.current) {
+                const event = new Event('resize');
+                window.dispatchEvent(event);
             }
+        });
 
-            resizeTimeoutRef.current = setTimeout(() => {
-                const entry = entries[0];
-                if (entry) {
-                    const { width: newWidth, height: newHeight } = entry.contentRect;
-                    setDimensions(prev => {
-                        const widthDiff = Math.abs(prev.width - newWidth);
-                        const heightDiff = Math.abs(prev.height - newHeight);
-                        if (widthDiff > 2 || heightDiff > 2) {
-                            return {
-                                width: width === 0 ? Math.floor(newWidth) : width,
-                                height: height === 0 ? Math.floor(newHeight) : height,
-                            };
-                        }
-                        return prev;
-                    });
-                }
-            }, 100);
-        };
+        resizeObserver.observe(containerRef.current);
 
-        const resizeObserver = new ResizeObserver(updateDimensions);
-        resizeObserver.observe(svg.parentElement);
-
-        const parent = svg.parentElement;
-        if (parent) {
-            setDimensions({
-                width: width === 0 ? Math.floor(parent.clientWidth) : width,
-                height: height === 0 ? Math.floor(parent.clientHeight) : height,
-            });
-        }
-
-        return () => {
-            if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
-            resizeObserver.disconnect();
-        };
-    }, [width, height]);
-
-    const actualWidth = width === 0 ? dimensions.width : width;
-    const actualHeight = height === 0 ? dimensions.height : height;
-
-    if (!data || data.length === 0 || actualWidth <= 0 || actualHeight <= 0) return null;
-    if (data.length < 2) return null;
-
-    const padding = 6;
-    const innerWidth = actualWidth - padding * 2;
-    const innerHeight = actualHeight - padding * 2;
-
-    if (innerWidth <= 0 || innerHeight <= 0) return null;
-
-    const validData = data.filter(v => typeof v === 'number' && !isNaN(v));
-    if (validData.length < 2) return null;
-
-    const minValue = Math.min(...validData);
-    const maxValue = Math.max(...validData);
-    const range = maxValue - minValue;
-    const effectiveRange = range === 0 ? 1 : range;
-
-    const points = validData.map((value, index) => {
-        const x = padding + (index / Math.max(1, validData.length - 1)) * innerWidth;
-        const normalizedValue = (value - minValue) / effectiveRange;
-        const y = padding + innerHeight - (normalizedValue * innerHeight);
-        return { x, y };
-    });
-
-    // --- BEZIER SMOOTHING ALGORITHM ---
-    const getCurvePath = (pts: { x: number, y: number }[]) => {
-        if (pts.length < 2) return "";
-        let path = `M ${pts[0].x},${pts[0].y}`;
-
-        for (let i = 0; i < pts.length - 1; i++) {
-            const p0 = pts[Math.max(i - 1, 0)];
-            const p1 = pts[i];
-            const p2 = pts[i + 1];
-            const p3 = pts[Math.min(i + 2, pts.length - 1)];
-
-            // Cubic Bezier control points calculation
-            const c1x = p1.x + (p2.x - p0.x) / 6;
-            const c1y = p1.y + (p2.y - p0.y) / 6;
-            const c2x = p2.x - (p3.x - p1.x) / 6;
-            const c2y = p2.y - (p3.y - p1.y) / 6;
-
-            path += ` C ${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`;
-        }
-        return path;
-    };
-
-    const pathData = getCurvePath(points);
-    const areaData = `${pathData} L ${points[points.length - 1].x},${actualHeight} L ${points[0].x},${actualHeight} Z`;
+        return () => resizeObserver.disconnect();
+    }, []);
 
     return (
-        <svg ref={svgRef} width={actualWidth} height={actualHeight} style={{ display: 'block', overflow: 'visible' }}>
-            <defs>
-                <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-                    <stop offset="100%" stopColor={color} stopOpacity="0.05" />
-                </linearGradient>
-            </defs>
-
-            {showGrid && (
-                <g opacity="0.1">
-                    <line x1={0} y1={actualHeight / 2} x2={actualWidth} y2={actualHeight / 2} stroke="currentColor" strokeWidth="0.5" />
-                </g>
-            )}
-
-            {showThreshold && (
-                <line
-                    x1={0}
-                    y1={padding + innerHeight - ((thresholdValue - minValue) / effectiveRange) * innerHeight}
-                    x2={actualWidth}
-                    y2={padding + innerHeight - ((thresholdValue - minValue) / effectiveRange) * innerHeight}
-                    stroke="rgba(255, 59, 48, 0.4)"
-                    strokeWidth="1"
-                    strokeDasharray="2,2"
-                />
-            )}
-
-            <path d={areaData} fill={`url(#${gradientId})`} />
-            <path d={pathData} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-            {/* Last point indicator */}
-            <circle
-                cx={points[points.length - 1].x}
-                cy={points[points.length - 1].y}
-                r="2"
-                fill={color}
-                className="sparkline-pulse"
-            />
-        </svg>
+        <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 0 }}>
+            <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+        </div>
     );
 };
 
