@@ -250,9 +250,10 @@ def get_sentinel_options_hierarchical():
             device_name = device_info.get('info', {}).get('name', f'Device {device_id}')
             
             # Use ACTUAL hardware inputs detected from the device
-            # FIX: inputs are at device_info level, not inside 'info'
+            # The inputs array is inside 'info' because Sentinel stores full device at ['info']
             channels = []
-            device_inputs = device_info.get('inputs', [])
+            device_info_data = device_info.get('info', {})
+            device_inputs = device_info_data.get('inputs', [])
             
             if device_inputs:
                 # Device has input detection - use actual inputs
