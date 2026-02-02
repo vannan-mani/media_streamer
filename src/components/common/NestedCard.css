@@ -1,79 +1,146 @@
-/* NestedCard Component Styles */
+/* Base nested card styles with 3-level hierarchy support */
 
 .nested-card {
-    margin-bottom: 1rem;
-}
-
-.nested-card.master-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    overflow: hidden;
+    margin-bottom: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nested-card.sub-card {
-    margin-left: 1.5rem;
-    margin-top: 0.5rem;
-    position: relative;
+/* Level 1: Master Cards - Largest, most prominent */
+.nested-card.level-1 {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    margin-bottom: 16px;
 }
 
-.nested-card.sub-card::before {
-    content: '';
-    position: absolute;
-    left: -1rem;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--glass-border);
+.nested-card.level-1 .nested-card-header {
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
+/* Level 2: Group Cards - Medium, container for items */
+.nested-card.level-2 {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    margin-left: 16px;
+}
+
+.nested-card.level-2 .nested-card-header {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Level 3: Item Cards - Compact, selectable */
+.nested-card.level-3 {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    margin-left: 32px;
+}
+
+.nested-card.level-3 .nested-card-header {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+/* Selection state for Level 3 cards */
+.nested-card.level-3.selected {
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+}
+
+.nested-card.level-3.selected .nested-card-header {
+    color: rgb(74, 222, 128);
+}
+
+/* Disabled state for Level 3 cards */
+.nested-card.level-3.disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+.nested-card.level-3.disabled .nested-card-header {
+    cursor: not-allowed !important;
+}
+
+/* Hover effects */
+.nested-card.level-1:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nested-card.level-2:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.nested-card.level-3:not(.disabled):hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(2px);
+}
+
+.nested-card.level-3.selected:hover {
+    background: rgba(74, 222, 128, 0.2);
+}
+
+/* Header styles */
 .nested-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.25rem;
-    cursor: pointer;
     transition: all 0.2s ease;
-    user-select: none;
-}
-
-.nested-card-header:hover {
-    background: rgba(255, 255, 255, 0.03);
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 10px;
 }
 
-.header-left svg {
-    color: var(--text-secondary);
-    transition: transform 0.2s ease;
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.nested-card-header h3 {
+/* Title sizing per level */
+.card-title {
     margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.9);
 }
 
-.nested-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    border-radius: 12px;
-    font-size: 0.75rem;
+.level-1-title {
+    font-size: 1.1rem;
     font-weight: 600;
-    color: var(--accent-green);
-    letter-spacing: 0.5px;
 }
 
+.level-2-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.level-3-title {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+/* Check icon for selected Level 3 cards */
+.check-icon {
+    color: rgb(74, 222, 128);
+    flex-shrink: 0;
+}
+
+/* Card body (children container) */
 .nested-card-body {
     padding: 0 1.25rem 1rem 1.25rem;
     animation: slideDown 0.2s ease-out;
@@ -91,19 +158,50 @@
     }
 }
 
-/* Sub-card specific styling */
-.sub-card .nested-card-header {
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 8px;
+.nested-card.level-1 .nested-card-body {
+    padding: 12px 16px 16px 16px;
 }
 
-.sub-card .nested-card-header h3 {
-    font-size: 0.8rem;
-    text-transform: none;
+/* Badge */
+.nested-badge {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: rgb(96, 165, 250);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
-.sub-card .nested-card-body {
-    padding: 0.5rem 0 0.5rem 2rem;
+/* Metadata display (signal, format, bitrate, fps) */
+.card-metadata {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.signal-badge {
+    font-size: 12px;
+}
+
+.signal-badge.present {
+    color: rgb(74, 222, 128);
+}
+
+.signal-badge.none {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.format-text,
+.bitrate-text,
+.fps-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+}
+
+/* Chevron icons */
+svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
