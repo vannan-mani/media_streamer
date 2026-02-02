@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import './ControlStack.css';
 import { useSentinel } from '../../hooks/useSentinel';
 
@@ -8,44 +8,58 @@ import EncodingMasterCard from '../cards/EncodingMasterCard';
 import ActionFooter from '../cards/ActionFooter';
 
 const ControlStack: React.FC = () => {
-    // 1. Get State & Methods from Hook
+    // Get hierarchical data from hook
     const {
         state,
-        endpoints,
-        presetsGrouped,
+        inputDevices,
+        destinations,
+        encodingPresets,
         loading,
         setIntent,
         setConfiguration,
-        isConfigurationComplete
     } = useSentinel();
 
-    // 2. Derive Current Selections
-    const selectedDeviceId = state?.settings?.selected_device_id ?? 0;
-    const selectedChannelId = state?.settings?.selected_channel_id ?? '';
-    const selectedPresetId = state?.settings?.selected_preset_id ?? '';
+    // 3-Level selection state
+    const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+    const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null);
+    const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
     const intent = state?.intent ?? 'DISABLED';
     const systemStatus = state?.system_status ?? 'Initializing...';
 
-    // 3. Hardware List (Flattened from Registry)
-    const devices = useMemo(() => {
-        if (!state?.hardware) return [];
-        return Object.values(state.hardware).map((h: any) => ({
-            ...h.info,
-            status: h.status
-        })).sort((a, b) => a.device_number - b.device_number);
-    }, [state?.hardware]);
+    // Check if all 3 selections are made
+    const isConfigurationComplete = selectedChannelId !== null &&
+        selectedStreamId !== null &&
+        selectedVariantId !== null;
 
-    // 4. Handlers
-    const handleInputSelect = (id: number) => {
-        setConfiguration(id, selectedChannelId, selectedPresetId);
+    // Handlers for 3-level selection
+    const handleChannelSelect = (channelId: string) => {
+        setSelectedChannelId(channelId);
+        // TODO: Update backend configuration when all 3 are selected
+        if (selectedStreamId && selectedVariantId) {
+            updateBackendConfig(channelId, selectedStreamId, selectedVariantId);
+        }
     };
 
-    const handleChannelSelect = (id: string) => {
-        setConfiguration(selectedDeviceId, id, selectedPresetId);
+    const handleStreamSelect = (streamId: string) => {
+        setSelectedStreamId(streamId);
+        if (selectedChannelId && selectedVariantId) {
+            updateBackendConfig(selectedChannelId, streamId, selectedVariantId);
+        }
     };
 
-    const handlePresetSelect = (id: string) => {
-        setConfiguration(selectedDeviceId, selectedChannelId, id);
+    const handleVariantSelect = (variantId: string) => {
+        setSelectedVariantId(variantId);
+        if (selectedChannelId && selectedStreamId) {
+            updateBackendConfig(selectedChannelId, selectedStreamId, variantId);
+        }
+    };
+
+    const updateBackendConfig = (channelId: string, streamId: string, variantId: string) => {
+        // Extract device ID from channel ID (format: "deviceId_chX")
+        const deviceId = parseInt(channelId.split('_')[0]) || 0;
+        // For now, use legacy setConfiguration - will need to update backend API later
+        setConfiguration(deviceId, streamId, variantId);
     };
 
     const handleToggle = () => {
@@ -60,29 +74,29 @@ const ControlStack: React.FC = () => {
     return (
         <div className="control-stack">
             <div className="card-stack-scroll">
-                {/* 1. Input Source */}
+                {/* 1. Input Source - 3-level: Master → Device → Channel */}
                 <InputMasterCard
-                    devices={devices}
-                    selectedDeviceId={selectedDeviceId}
-                    onSelect={handleInputSelect}
-                />
-
-                {/* 2. Destination Endpoint */}
-                <EndpointMasterCard
-                    endpoints={endpoints}
+                    devices={inputDevices}
                     selectedChannelId={selectedChannelId}
-                    onSelect={handleChannelSelect}
+                    onSelectChannel={handleChannelSelect}
                 />
 
-                {/* 3. Encoding Preset */}
+                {/* 2. Destination - 3-level: Master → Platform → Stream */}
+                <EndpointMasterCard
+                    destinations={destinations}
+                    selectedStreamId={selectedStreamId}
+                    onSelectStream={handleStreamSelect}
+                />
+
+                {/* 3. Encoding Preset - 3-level: Master → Quality → Variant */}
                 <EncodingMasterCard
-                    presets={presetsGrouped}
-                    selectedPresetId={selectedPresetId}
-                    onSelect={handlePresetSelect}
+                    presets={encodingPresets}
+                    selectedVariantId={selectedVariantId}
+                    onSelectVariant={handleVariantSelect}
                 />
             </div>
 
-            {/* 4. Action Footer (Fixed Bottom) - Only enable if all selections are made */}
+            {/* Action Footer */}
             <ActionFooter
                 intent={intent}
                 status={systemStatus}

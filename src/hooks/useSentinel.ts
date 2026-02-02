@@ -35,6 +35,50 @@ export interface QualityGroup {
     variants: Preset[];
 }
 
+// 3-Level Hierarchical Types
+export interface InputChannel {
+    id: string;
+    channelNumber: number;
+    signalStatus: 'present' | 'none';
+    format: string | null;
+    selectable: boolean;
+}
+
+export interface InputDevice {
+    id: string;
+    name: string;
+    channels: InputChannel[];
+}
+
+export interface DestinationStream {
+    id: string;
+    name: string;
+    key: string;
+    description?: string;
+}
+
+export interface DestinationPlatform {
+    id: string;
+    name: string;
+    icon?: string;
+    streams: DestinationStream[];
+}
+
+export interface PresetVariant {
+    id: string;
+    name: string;
+    bitrate: number;
+    fps: number;
+    description?: string;
+}
+
+export interface PresetQuality {
+    id: string;
+    name: string;
+    resolution?: string;
+    variants: PresetVariant[];
+}
+
 export interface SentinelState {
     intent: 'AUTO_STREAM' | 'DISABLED';
     system_status: string;
@@ -51,9 +95,14 @@ export const useSentinel = () => {
     const [channels, setChannels] = useState<Channel[]>([]);
     const [presets, setPresets] = useState<Preset[]>([]);
 
-    // Hierarchical data
+    // Hierarchical data (2-level - legacy)
     const [endpoints, setEndpoints] = useState<Record<string, PlatformGroup>>({});
     const [presetsGrouped, setPresetsGrouped] = useState<Record<string, QualityGroup>>({});
+
+    // 3-Level Hierarchical data
+    const [inputDevices, setInputDevices] = useState<Record<string, InputDevice>>({});
+    const [destinations, setDestinations] = useState<Record<string, DestinationPlatform>>({});
+    const [encodingPresets, setEncodingPresets] = useState<Record<string, PresetQuality>>({});
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -70,12 +119,21 @@ export const useSentinel = () => {
                     setPresets(data.presets);
                 }
 
-                // Fetch nested/hierarchical data
+                // Fetch nested/hierarchical data (2-level - legacy)
                 const nestedRes = await fetch('http://115.112.70.85:8000/api/sentinel/options/nested');
                 if (nestedRes.ok) {
                     const nestedData = await nestedRes.json();
                     setEndpoints(nestedData.endpoints);
                     setPresetsGrouped(nestedData.presets);
+                }
+
+                // Fetch 3-level hierarchical data
+                const hierarchicalRes = await fetch('http://115.112.70.85:8000/api/sentinel/options/hierarchical');
+                if (hierarchicalRes.ok) {
+                    const hierarchicalData = await hierarchicalRes.json();
+                    setInputDevices(hierarchicalData.inputs || {});
+                    setDestinations(hierarchicalData.destinations || {});
+                    setEncodingPresets(hierarchicalData.presets || {});
                 }
             } catch (e) {
                 console.error("Failed to fetch Sentinel options:", e);
@@ -164,6 +222,10 @@ export const useSentinel = () => {
         presets,
         endpoints,
         presetsGrouped,
+        // 3-level hierarchical data
+        inputDevices,
+        destinations,
+        encodingPresets,
         loading,
         error,
         setIntent,

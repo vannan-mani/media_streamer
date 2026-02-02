@@ -1,80 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NestedCard from '../common/NestedCard';
-import GlassCard from '../common/GlassCard';
-import { Globe, Radio, Youtube } from 'lucide-react';
-import '../layout/ControlStack.css';
-import type { PlatformGroup } from '../../hooks/useSentinel';
+import type { DestinationPlatform } from '../../hooks/useSentinel';
 
 interface EndpointMasterCardProps {
-    endpoints: Record<string, PlatformGroup>;
-    selectedChannelId: string;
-    onSelect: (channelId: string) => void;
+    destinations: Record<string, DestinationPlatform>;
+    selectedStreamId: string | null;
+    onSelectStream: (streamId: string) => void;
 }
 
-const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({ endpoints, selectedChannelId, onSelect }) => {
-    const platformKeys = Object.keys(endpoints);
-    const totalChannels = platformKeys.reduce((sum, key) => sum + endpoints[key].channels.length, 0);
+const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({
+    destinations,
+    selectedStreamId,
+    onSelectStream
+}) => {
+    const [expandedMaster, setExpandedMaster] = useState(true);
+    const [expandedPlatforms, setExpandedPlatforms] = useState<Record<string, boolean>>({});
 
-    const getPlatformIcon = (icon: string) => {
-        switch (icon) {
-            case 'youtube':
-                return <Youtube size={18} />;
-            case 'facebook':
-                return <Globe size={18} />;
-            default:
-                return <Globe size={18} />;
-        }
+    const platformArray = Object.values(destinations);
+    const totalPlatforms = platformArray.length;
+    const totalStreams = platformArray.reduce((sum, platform) => sum + platform.streams.length, 0);
+
+    const togglePlatform = (platformId: string) => {
+        setExpandedPlatforms(prev => ({
+            ...prev,
+            [platformId]: !prev[platformId]
+        }));
     };
 
     return (
-        <GlassCard className="master-card">
-            <NestedCard
-                title="DESTINATION ENDPOINT"
-                badge={`${platformKeys.length} PLATFORM${platformKeys.length !== 1 ? 'S' : ''} • ${totalChannels} CHANNEL${totalChannels !== 1 ? 'S' : ''}`}
-                defaultExpanded={true}
-            >
-                <div className="platform-list">
-                    {platformKeys.map((platformId) => {
-                        const platform = endpoints[platformId];
-
-                        return (
-                            <NestedCard
-                                key={platformId}
-                                title={platform.name}
-                                badge={`${platform.channels.length} CHANNEL${platform.channels.length !== 1 ? 'S' : ''}`}
-                                isSubCard={true}
-                                defaultExpanded={false}
-                            >
-                                <div className="channel-grid">
-                                    {platform.channels.map((channel) => {
-                                        const isSelected = selectedChannelId === channel.id;
-
-                                        return (
-                                            <div
-                                                key={channel.id}
-                                                className={`channel-card ${isSelected ? 'selected' : ''}`}
-                                                onClick={() => onSelect(channel.id)}
-                                            >
-                                                <div className="channel-icon">
-                                                    {getPlatformIcon(platform.icon)}
-                                                </div>
-                                                <div className="channel-info">
-                                                    <span className="channel-name">{channel.name}</span>
-                                                    <span className="channel-desc">{channel.description}</span>
-                                                </div>
-                                                <div className="channel-select">
-                                                    <Radio size={14} className={isSelected ? 'radio-on' : 'radio-off'} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </NestedCard>
-                        );
-                    })}
-                </div>
-            </NestedCard>
-        </GlassCard>
+        <NestedCard
+            title="Destination"
+            level={1}
+            badge={`${totalPlatforms} Platforms • ${totalStreams} Streams`}
+            isExpanded={expandedMaster}
+            onToggle={() => setExpandedMaster(!expandedMaster)}
+        >
+            {platformArray.map(platform => (
+                <NestedCard
+                    key={platform.id}
+                    title={platform.name}
+                    level={2}
+                    badge={`${platform.streams.length} streams`}
+                    isExpanded={expandedPlatforms[platform.id] || false}
+                    onToggle={() => togglePlatform(platform.id)}
+                >
+                    {platform.streams.map(stream => (
+                        <NestedCard
+                            key={stream.id}
+                            title={stream.name}
+                            level={3}
+                            isSelected={selectedStreamId === stream.id}
+                            isSelectable={true}
+                            onSelect={() => onSelectStream(stream.id)}
+                            metadata={{
+                                description: stream.description
+                            }}
+                        />
+                    ))}
+                </NestedCard>
+            ))}
+        </NestedCard>
     );
 };
 
