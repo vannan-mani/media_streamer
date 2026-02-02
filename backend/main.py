@@ -9,6 +9,7 @@ import random
 import logging
 import json
 import config
+from typing import Dict, List, Optional
 
 # Import GStreamer managers
 try:
@@ -64,17 +65,6 @@ class StreamStatsDTO(BaseModel):
     network: NetworkStats
     encoding: EncodingHealth
     youtubeIngest: str
-    timestamp: float
-
-class MemoryStats(BaseModel):
-    used: float
-    total: float
-
-class HealthDataDTO(BaseModel):
-    cpu: float
-    gpu: float
-    temperature: float
-    memory: MemoryStats
     timestamp: float
 
 class StreamControlResponse(BaseModel):
@@ -154,23 +144,6 @@ def get_stream_stats():
             youtubeIngest="excellent" if random.random() > 0.1 else "good",
             timestamp=time.time()
         )
-
-@app.get("/api/health", response_model=HealthDataDTO)
-def get_system_health():
-    """Get real system health metrics"""
-    cpu_usage = psutil.cpu_percent(interval=None)
-    mem = psutil.virtual_memory()
-    
-    return HealthDataDTO(
-        cpu=cpu_usage,
-        gpu=random.uniform(30, 50),
-        temperature=random.uniform(45, 60),
-        memory=MemoryStats(
-            used=mem.used / (1024**3),
-            total=mem.total / (1024**3)
-        ),
-        timestamp=time.time()
-    )
 
 @app.get("/api/decklink/devices")
 def get_decklink_devices():
@@ -291,19 +264,6 @@ def get_sentinel_options_hierarchical():
                 "channels": channels
             }
     
-    # Always add NDI source as placeholder (waiting/unavailable)
-    inputs["ndi"] = {
-        "id": "ndi",
-        "name": "NDI Source",
-        "channels": [{
-            "id": "ndi_1",
-            "channelNumber": 1,
-            "signalStatus": "waiting",
-            "format": None,
-            "selectable": False
-        }]
-    }
-    
     return {
         "inputs": inputs,
         "destinations": stream_config['destinations'],
@@ -337,6 +297,45 @@ def set_sentinel_intent(req: SentinelIntentRequest):
     sentinel_service.set_intent(req.action)
     return {"status": "success", "intent": req.action}
 
+
+@app.get("/api/health")
+def get_health():
+    """Get real-time system health metrics using psutil"""
+    try:
+        cpu_usage = psutil.cpu_percent(interval=None)
+        memory = psutil.virtual_memory()
+        
+        # GPU stats would typically need nvml for NVIDIA, 
+        # but for now we report CPU/MEM as primary health.
+        # Fallback 0 for GPU if library not present.
+        gpu_usage = 0.0
+        temp = 0.0
+        
+        # Try to get temperature if supported
+        try:
+            temps = psutil.sensors_temperatures()
+            if temps and 'coretemp' in temps:
+                temp = temps['coretemp'][0].current
+        except:
+            pass
+
+        return {
+            "cpu": cpu_usage,
+            "gpu": gpu_usage,
+            "temperature": temp,
+            "memory": {
+                "used": round(memory.used / (1024**3), 2),
+                "total": round(memory.total / (1024**3), 2)
+            },
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        logging.error(f"Error fetching health metrics: {e}")
+        return {
+            "cpu": 0, "gpu": 0, "temperature": 0,
+            "memory": {"used": 0, "total": 0},
+            "timestamp": int(time.time())
+        }
 
 @app.get("/api/stream/telemetry")
 def get_stream_telemetry():

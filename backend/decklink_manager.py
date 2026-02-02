@@ -48,8 +48,7 @@ class DeckLinkManager:
                 logger.debug(f"Error checking index {device_num}: {e}")
                 
         if not devices:
-            logger.warning("No physical DeckLink hardware detected. Using mock data.")
-            devices = self._get_mock_devices()
+            logger.warning("No physical DeckLink hardware detected.")
             
         return devices
     
@@ -168,62 +167,13 @@ class DeckLinkManager:
             if pipeline: pipeline.set_state(Gst.State.NULL)
             return None
     
-    def _get_mock_devices(self) -> List[Dict]:
-        """
-        Return mock device data for development/testing
-        """
-        logger.info("Using mock DeckLink devices for development")
-        return [
-            {
-                "id": "decklink_0",
-                "device_number": 0,
-                "name": "DeckLink Quad HDMI Recorder (Mock)",
-                "inputs": [
-                    {
-                        "id": "input_0",
-                        "port": "HDMI 1",
-                        "device_number": 0,
-                        "signal_detected": True,
-                        "format": "1080p60",
-                        "active": False
-                    },
-                    {
-                        "id": "input_1",
-                        "port": "HDMI 2",
-                        "device_number": 0,
-                        "signal_detected": True,
-                        "format": "1080p30",
-                        "active": True
-                    },
-                    {
-                        "id": "input_2",
-                        "port": "HDMI 3",
-                        "device_number": 0,
-                        "signal_detected": False,
-                        "format": None,
-                        "active": False
-                    },
-                    {
-                        "id": "input_3",
-                        "port": "HDMI 4",
-                        "device_number": 0,
-                        "signal_detected": False,
-                        "format": None,
-                        "active": False
-                    }
-                ]
-            }
-        ]
-    
     def detect_signal(self, device_num: int) -> Dict:
         """
         Detect signal presence and format on a specific device
-        This would require creating a test pipeline and checking for signal
         """
-        # TODO: Implement actual signal detection
-        # For now, return mock data
+        # Actual detection is handled via probe or long-running pipeline telemetry
         return {
-            "signal_detected": True,
-            "format": "1080p60",
-            "connection_type": "HDMI"
+            "signal_detected": False,
+            "format": "No Signal",
+            "connection_type": "SDI"
         }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { type HealthData } from '../mocks/mockData';
+import { type HealthData, INITIAL_HEALTH_DATA } from '../types';
 
 interface UseHealthDataOptions {
     updateInterval?: number; // milliseconds
@@ -37,9 +37,7 @@ export const useHealthData = (options: UseHealthDataOptions = {}) => {
     }, [enabled, updateInterval]);
 
     // Fallback logic to prevent breaking UI if data is null
-    const currentHealth = healthData || (history.length > 0 ? history[history.length - 1] : {
-        cpu: 0, gpu: 0, temperature: 0, memory: { used: 0, total: 16 }, timestamp: Date.now()
-    } as HealthData);
+    const currentHealth = healthData || (history.length > 0 ? history[history.length - 1] : INITIAL_HEALTH_DATA);
 
     return { healthData: currentHealth, history };
 };

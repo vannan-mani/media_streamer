@@ -112,7 +112,7 @@ export const useSentinel = () => {
         const fetchOptions = async () => {
             try {
                 // Fetch flat data for backward compatibility
-                const flatRes = await fetch('http://115.112.70.85:8000/api/sentinel/options');
+                const flatRes = await fetch('/api/sentinel/options');
                 if (flatRes.ok) {
                     const data = await flatRes.json();
                     setChannels(data.channels);
@@ -120,7 +120,7 @@ export const useSentinel = () => {
                 }
 
                 // Fetch nested/hierarchical data (2-level - legacy)
-                const nestedRes = await fetch('http://115.112.70.85:8000/api/sentinel/options/nested');
+                const nestedRes = await fetch('/api/sentinel/options/nested');
                 if (nestedRes.ok) {
                     const nestedData = await nestedRes.json();
                     setEndpoints(nestedData.endpoints);
@@ -128,7 +128,7 @@ export const useSentinel = () => {
                 }
 
                 // Fetch 3-level hierarchical data
-                const hierarchicalRes = await fetch('http://115.112.70.85:8000/api/sentinel/options/hierarchical');
+                const hierarchicalRes = await fetch('/api/sentinel/options/hierarchical');
                 if (hierarchicalRes.ok) {
                     const hierarchicalData = await hierarchicalRes.json();
                     setInputDevices(hierarchicalData.inputs || {});
@@ -146,7 +146,7 @@ export const useSentinel = () => {
     useEffect(() => {
         const fetchState = async () => {
             try {
-                const res = await fetch('http://115.112.70.85:8000/api/sentinel/state');
+                const res = await fetch('/api/sentinel/state');
                 if (!res.ok) throw new Error('API Error');
                 const data = await res.json();
                 setState(data);
@@ -166,7 +166,7 @@ export const useSentinel = () => {
     // Set Intent Action
     const setIntent = useCallback(async (action: 'AUTO_STREAM' | 'DISABLED') => {
         try {
-            await fetch('http://115.112.70.85:8000/api/sentinel/intent', {
+            await fetch('/api/sentinel/intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action }),
@@ -181,7 +181,7 @@ export const useSentinel = () => {
     // Set Configuration
     const setConfiguration = useCallback(async (deviceId: number, channelId: string, presetId: string) => {
         try {
-            await fetch('http://115.112.70.85:8000/api/sentinel/config', {
+            await fetch('/api/sentinel/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

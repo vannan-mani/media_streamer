@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { type StreamStats } from '../mocks/mockData';
+import { type StreamStats, INITIAL_STREAM_STATS } from '../types';
 
 export const useStreamStats = (enabled: boolean = true) => {
     const [streamStats, setStreamStats] = useState<StreamStats | null>(null);
@@ -26,15 +26,7 @@ export const useStreamStats = (enabled: boolean = true) => {
     }, [enabled]);
 
     // Fallback to empty/loading state if data hasn't arrived
-    const currentStats = streamStats || (history.length > 0 ? history[history.length - 1] : {
-        bitrate: 0,
-        fps: 0,
-        droppedFrames: 0,
-        network: { upload: 0, rtt: 0, drops: 0, interfaceSpeed: 1000 },
-        encoding: { keyframes: 'stable', gop: '2.0s', audioSync: 0, codecHealth: 'nominal' },
-        youtubeIngest: 'good',
-        timestamp: Date.now()
-    } as StreamStats);
+    const currentStats = streamStats || (history.length > 0 ? history[history.length - 1] : INITIAL_STREAM_STATS);
 
     return { streamStats: currentStats, history };
 };
