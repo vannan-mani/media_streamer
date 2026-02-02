@@ -59,34 +59,34 @@ echo -e "${GREEN}✓ Logs directory ready${NC}"
 echo ""
 
 # Step 7: Install/Update systemd services
-echo -e "${YELLOW}Step 7: Installing systemd services...${NC}"
+echo -e "${YELLOW}Step 7: Installing systemd service...${NC}"
 if [ -f "systemd/media-stream-backend.service" ]; then
     sudo cp systemd/media-stream-backend.service /etc/systemd/system/
     echo -e "${GREEN}✓ Backend service file installed${NC}"
 fi
 
-if [ -f "systemd/media-stream-frontend.service" ]; then
-    sudo cp systemd/media-stream-frontend.service /etc/systemd/system/
-    echo -e "${GREEN}✓ Frontend service file installed${NC}"
-fi
+# Disable frontend service if it exists (not needed - backend serves everything)
+sudo systemctl stop media-stream-frontend 2>/dev/null || true
+sudo systemctl disable media-stream-frontend 2>/dev/null || true
 
 sudo systemctl daemon-reload
 echo -e "${GREEN}✓ Systemd reloaded${NC}"
 echo ""
 
 # Step 8: Enable services (start on boot)
-echo -e "${YELLOW}Step 8: Enabling services...${NC}"
+echo -e "${YELLOW}Step 8: Enabling backend service...${NC}"
 sudo systemctl enable media-stream-backend 2>/dev/null || true
-sudo systemctl enable media-stream-frontend 2>/dev/null || true
-echo -e "${GREEN}✓ Services enabled${NC}"
+echo -e "${GREEN}✓ Backend service enabled${NC}"
 echo ""
 
 # Step 9: Restart services
-echo -e "${YELLOW}Step 9: Restarting services...${NC}"
+echo -e "${YELLOW}Step 9: Restarting backend service...${NC}"
+# Kill any process on port 8000
+sudo fuser -k 8000/tcp 2>/dev/null || true
+sleep 1
 sudo systemctl restart media-stream-backend
-sudo systemctl restart media-stream-frontend
 sleep 2
-echo -e "${GREEN}✓ Services restarted${NC}"
+echo -e "${GREEN}✓ Backend service restarted${NC}"
 echo ""
 
 # Step 10: Check service status
@@ -95,33 +95,27 @@ echo ""
 echo "Backend Status:"
 sudo systemctl status media-stream-backend --no-pager | head -10
 echo ""
-echo "Frontend Status:"
-sudo systemctl status media-stream-frontend --no-pager | head -10
-echo ""
 
 # Final status check
 BACKEND_STATUS=$(sudo systemctl is-active media-stream-backend)
-FRONTEND_STATUS=$(sudo systemctl is-active media-stream-frontend)
 
 echo "========================================="
-if [ "$BACKEND_STATUS" = "active" ] && [ "$FRONTEND_STATUS" = "active" ]; then
+if [ "$BACKEND_STATUS" = "active" ]; then
     echo -e "${GREEN}✓ Deployment Successful!${NC}"
     echo "========================================="
     echo ""
-    echo "Application is running:"
-    echo "  Frontend: http://115.112.70.85:5173"
-    echo "  Backend:  http://115.112.70.85:8000"
+    echo "Application is running at:"
+    echo "  http://115.112.70.85:8000"
+    echo ""
+    echo "(Backend serves both UI and API on port 8000)"
     echo ""
     echo "View logs:"
-    echo "  Backend:  sudo journalctl -u media-stream-backend -f"
-    echo "  Frontend: sudo journalctl -u media-stream-frontend -f"
+    echo "  sudo journalctl -u media-stream-backend -f"
 else
-    echo -e "${RED}⚠ Warning: Some services may not be running${NC}"
-    echo "Backend: $BACKEND_STATUS"
-    echo "Frontend: $FRONTEND_STATUS"
+    echo -e "${RED}⚠ Warning: Backend service not running${NC}"
+    echo "Status: $BACKEND_STATUS"
     echo ""
     echo "Check logs for errors:"
     echo "  sudo journalctl -u media-stream-backend -n 50"
-    echo "  sudo journalctl -u media-stream-frontend -n 50"
 fi
 echo ""
