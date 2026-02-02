@@ -1,122 +1,150 @@
-/* Modern Widget Card Design - Mobile App Style */
+/* Modern Widget Cards - LIGHT GLASSMORPHISM THEME */
+/* Matches GlassCard.css styling with dark text on translucent white */
 
-/* Base card styling - higher visibility */
+/* Base card */
 .nested-card {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
     margin-bottom: 12px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(12px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
 }
 
-/* Level 1: Section Headers (minimal card style) */
+/* ================================================ */
+/* Level 1: MASTER CARD - Section Container */
+/* ================================================ */
 .nested-card.level-1 {
-    background: transparent;
-    border: none;
-    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .nested-card.level-1 .nested-card-header {
-    padding: 12px 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.nested-card.level-1 .nested-card-header h3,
+.nested-card.level-1 .card-title {
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    cursor: default;
+    color: #1a1a2e !important;
 }
 
-/* Hide chevron for Level 1 */
-.nested-card.level-1 .header-left svg {
-    display: none;
+.nested-card.level-1 .nested-card-body {
+    padding: 14px;
 }
 
-/* Level 2: Invisible grouping containers */
+/* ================================================ */
+/* Level 2: GROUP CARD - Device/Platform/Quality */
+/* ================================================ */
 .nested-card.level-2 {
-    background: transparent;
-    border: none;
-    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-bottom: 14px;
     margin-left: 0;
 }
 
 .nested-card.level-2 .nested-card-header {
-    padding: 8px 0 12px 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+}
+
+.nested-card.level-2 .nested-card-header:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.nested-card.level-2 .nested-card-header h3,
+.nested-card.level-2 .card-title {
     font-size: 0.95rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
+    color: #2d3748 !important;
 }
 
 .nested-card.level-2 .nested-card-body {
-    padding: 0;
+    padding: 12px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
 }
 
-/* Level 3: WIDGET CARDS - The stars of the show */
+/* ================================================ */
+/* Level 3: ITEM CARDS - Selectable Widgets */
+/* ================================================ */
 .nested-card.level-3 {
-    background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    margin-bottom: 0;
-    margin-left: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    margin: 0;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.nested-card.level-3:hover:not(.disabled) {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .nested-card.level-3 .nested-card-header {
-    padding: 16px;
-    font-size: 0.95rem;
+    padding: 14px 16px;
+}
+
+.nested-card.level-3 .nested-card-header h3,
+.nested-card.level-3 .card-title {
+    font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
-    cursor: pointer;
+    color: #1e293b !important;
 }
 
-/* Selected state - Vibrant green */
+.nested-card.level-3:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 122, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* SELECTED STATE - Green accent */
 .nested-card.level-3.selected {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(74, 222, 128, 0.15) 100%);
-    border: 2px solid rgb(74, 222, 128);
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.1) 100%);
+    border: 2px solid #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.nested-card.level-3.selected .nested-card-header {
-    color: rgb(255, 255, 255);
+.nested-card.level-3.selected .nested-card-header h3,
+.nested-card.level-3.selected .card-title {
+    color: #15803d !important;
+    font-weight: 700;
 }
 
 .nested-card.level-3.selected:hover {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.3) 0%, rgba(74, 222, 128, 0.2) 100%);
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* Disabled state */
+/* DISABLED STATE */
 .nested-card.level-3.disabled {
-    opacity: 0.4;
+    background: rgba(240, 240, 240, 0.7);
+    border-color: rgba(0, 0, 0, 0.06);
+    opacity: 0.5;
     cursor: not-allowed !important;
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
 }
 
 .nested-card.level-3.disabled:hover {
     transform: none;
-    box-shadow: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Header layout */
+/* ================================================ */
+/* Header Layout */
+/* ================================================ */
 .nested-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.2s ease;
 }
 
 .header-left {
@@ -130,95 +158,93 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-shrink: 0;
 }
 
-/* Title */
-.card-title {
+/* Title - DARK TEXT */
+.card-title,
+.nested-card-header h3 {
     margin: 0;
-    color: inherit;
-    line-height: 1.4;
+    color: #1e293b !important;
 }
 
-/* Checkmark icon for selected cards */
+/* Checkmark for selected */
 .check-icon {
-    color: rgb(74, 222, 128);
-    flex-shrink: 0;
-    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.5));
+    color: #22c55e;
+    filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.5));
 }
 
-/* Badge styling */
+/* ================================================ */
+/* Badge Styling */
+/* ================================================ */
 .nested-badge {
-    background: rgba(96, 165, 250, 0.2);
-    border: 1px solid rgba(96, 165, 250, 0.5);
-    color: rgb(147, 197, 253);
-    padding: 4px 12px;
-    border-radius: 20px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: #2563eb;
+    padding: 4px 10px;
+    border-radius: 16px;
     font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
 }
 
-/* Metadata display */
+/* ================================================ */
+/* Metadata (Signal, Format, Bitrate) */
+/* ================================================ */
 .card-metadata {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 0.85rem;
     margin-top: 8px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.8rem;
 }
 
 .signal-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    gap: 4px;
+    font-weight: 600;
 }
 
 .signal-badge.present {
-    color: rgb(74, 222, 128);
+    color: #16a34a;
 }
 
 .signal-badge.present::before {
     content: '●';
-    font-size: 0.9rem;
 }
 
 .signal-badge.none {
-    color: rgba(255, 255, 255, 0.4);
+    color: #9ca3af;
 }
 
 .signal-badge.none::before {
     content: '○';
-    font-size: 0.9rem;
 }
 
 .format-text,
 .bitrate-text,
 .fps-text {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.8rem;
+    color: #64748b;
     font-weight: 500;
 }
 
-/* Card body */
-.nested-card-body {
-    padding: 0 16px 16px 16px;
+/* ================================================ */
+/* Chevron Icons */
+/* ================================================ */
+svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: #64748b;
 }
 
-.nested-card.level-1 .nested-card-body {
-    padding: 0;
-}
-
-/* Animation for body expand/collapse */
+/* ================================================ */
+/* Animation */
+/* ================================================ */
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-8px);
     }
 
     to {
@@ -228,47 +254,14 @@
 }
 
 .nested-card-body {
-    animation: slideDown 0.25s ease-out;
+    animation: slideDown 0.2s ease-out;
 }
 
-/* Chevron icons - subtle for Level 2, hidden for Level 1 */
-svg.chevron-icon {
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.nested-card.level-2 svg.chevron-icon {
-    width: 18px;
-    height: 18px;
-}
-
-/* Responsive grid for smaller screens */
+/* ================================================ */
+/* Responsive */
+/* ================================================ */
 @media (max-width: 768px) {
     .nested-card.level-2 .nested-card-body {
         grid-template-columns: 1fr;
     }
-}
-
-/* Glassmorphism effect on hover */
-.nested-card.level-3::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.nested-card.level-3:hover::before {
-    opacity: 1;
-}
-
-.nested-card.level-3.selected::before {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0) 100%);
-    opacity: 1;
 }
