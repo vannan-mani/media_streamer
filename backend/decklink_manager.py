@@ -58,9 +58,12 @@ class DeckLinkManager:
         Probe a specific DeckLink device using a state change check.
         This is the most reliable way to confirm hardware existence and signal.
         """
+        source = None
+        pipeline = None
         try:
             source = Gst.ElementFactory.make("decklinkvideosrc", f"probe_src_{device_num}")
             if not source:
+                logger.debug(f"decklinkvideosrc element not available for index {device_num}")
                 return None
             
             source.set_property("device-number", device_num)
@@ -72,79 +75,77 @@ class DeckLinkManager:
             pipeline.add(sink)
             source.link(sink)
             
-            # Use the bus to listen for signal change messages
-            bus = pipeline.get_bus()
-            
-            # Start the pipeline
-            ret = pipeline.set_state(Gst.State.PLAYING)
-            
+            # STEP 1: Check hardware existence (READY state)
+            # This is fast and reliable. If this fails, the device number is invalid.
+            ret = pipeline.set_state(Gst.State.READY)
             if ret == Gst.StateChangeReturn.FAILURE:
+                logger.debug(f"Device index {device_num} failed to reach READY state (likely does not exist)")
                 pipeline.set_state(Gst.State.NULL)
                 return None
-
-            # Wait for signal. We'll poll the bus for a moment.
-            # DeckLink posts elemental messages when signal is caught.
+            
+            # AT THIS POINT, HARDWARE EXISTS! We must return it even if signal detection fails.
             has_signal = False
             detected_format = "No Signal"
             
-            start_time = time.time()
-            timeout = 1.0 # 1 second should be enough for hardware to lock
-            
-            while time.time() - start_time < timeout:
-                msg = bus.pop_filtered(0.1 * Gst.SECOND, Gst.MessageType.ELEMENT | Gst.MessageType.ERROR | Gst.MessageType.STATE_CHANGED)
-                if not msg:
-                    # Check property as fallback during polling
-                    try:
-                        if source.get_property("signal"):
-                            has_signal = True
-                            break
-                    except:
-                        pass
-                    continue
-                
-                if msg.type == Gst.MessageType.ELEMENT:
-                    struct = msg.get_structure()
-                    if struct.get_name() == "decklink-video-input-signal-changed":
-                        has_signal = struct.get_value("present")
-                        if has_signal:
-                            logger.info(f"Bus Message: Signal detected on device {device_num}")
-                            break
-                elif msg.type == Gst.MessageType.ERROR:
-                    err, debug = msg.parse_error()
-                    logger.debug(f"Bus Error during probe: {err.message}")
-                    break
-            
-            # One last check on properties if bus didn't give us a definitive 'present'
-            if not has_signal:
-                try:
-                    has_signal = source.get_property("signal")
-                except:
-                    pass
-
-            if has_signal:
-                try:
-                    pad = source.get_static_pad("src")
-                    caps = pad.get_current_caps()
-                    if caps:
-                        s = caps.get_structure(0)
-                        width = s.get_value("width")
-                        height = s.get_value("height")
-                        fps_n = s.get_value("framerate").numerator
-                        fps_d = s.get_value("framerate").denominator
-                        detected_format = f"{width}x{height} @ {fps_n/fps_d:.2f}fps"
-                    else:
-                        detected_format = "Active Signal"
-                except:
-                    detected_format = "Active Signal"
-
+            # Get device name while in READY state
             try:
                 name = source.get_property("device-name")
             except:
                 name = None
+            display_name = name if name and "DeckLink" in name else f"DeckLink SDI Port {device_num}"
+
+            # STEP 2: Check signal (PLAYING state)
+            # This is more intensive. We don't fail the probe if this fails.
+            bus = pipeline.get_bus()
+            ret = pipeline.set_state(Gst.State.PLAYING)
             
-            # Use identified hardware model as default
-            display_name = name if name and "DeckLink" in name else "DeckLink SDI 4K"
-            
+            if ret != Gst.StateChangeReturn.FAILURE:
+                # Wait for signal. We'll poll the bus for a moment.
+                start_time = time.time()
+                timeout = 0.8 # Reduced timeout slightly for responsiveness
+                
+                while time.time() - start_time < timeout:
+                    msg = bus.pop_filtered(0.1 * Gst.SECOND, Gst.MessageType.ELEMENT | Gst.MessageType.ERROR)
+                    if not msg:
+                        # Polling fallback
+                        try:
+                            if source.get_property("signal"):
+                                has_signal = True
+                                break
+                        except: pass
+                        continue
+                    
+                    if msg.type == Gst.MessageType.ELEMENT:
+                        struct = msg.get_structure()
+                        if struct.get_name() == "decklink-video-input-signal-changed":
+                            has_signal = struct.get_value("present")
+                            if has_signal: break
+                    elif msg.type == Gst.MessageType.ERROR:
+                        break
+                
+                # Double check signal property
+                if not has_signal:
+                    try:
+                        has_signal = source.get_property("signal")
+                    except: pass
+
+                if has_signal:
+                    try:
+                        pad = source.get_static_pad("src")
+                        caps = pad.get_current_caps()
+                        if caps:
+                            s = caps.get_structure(0)
+                            width = s.get_value("width")
+                            height = s.get_value("height")
+                            fps_n = s.get_value("framerate").numerator
+                            fps_d = s.get_value("framerate").denominator
+                            detected_format = f"{width}x{height} @ {fps_n/fps_d:.2f}fps"
+                    except:
+                        detected_format = "Signal Detected"
+            else:
+                logger.debug(f"Device {device_num} exists but failed to reach PLAYING state (might be busy)")
+                detected_format = "Hardware Busy"
+
             device_info = {
                 "id": f"decklink_{device_num}",
                 "device_number": device_num,
@@ -154,17 +155,17 @@ class DeckLinkManager:
                     "port": "SDI Input",
                     "device_number": device_num,
                     "signal_detected": has_signal,
-                    "format": detected_format if has_signal else "No Signal",
+                    "format": detected_format,
                     "active": True if device_num == 0 else False
                 }]
             }
             
-            # Clean up
             pipeline.set_state(Gst.State.NULL)
             return device_info
             
         except Exception as e:
-            logger.error(f"Exception probing device {device_num}: {e}")
+            logger.error(f"Critical exception probing device {device_num}: {e}")
+            if pipeline: pipeline.set_state(Gst.State.NULL)
             return None
     
     def _get_mock_devices(self) -> List[Dict]:
