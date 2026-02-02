@@ -7,6 +7,7 @@ import time
 import os
 import random
 import logging
+import json
 import config
 
 # Import GStreamer managers
@@ -228,6 +229,63 @@ def get_sentinel_options_nested():
         "endpoints": config.ENDPOINTS,
         "presets": config.PRESETS
     }
+
+@app.get("/api/sentinel/options/hierarchical")
+def get_sentinel_options_hierarchical():
+    """Get 3-level hierarchical structure: Master → Group → Item"""
+    
+    # Load stream configuration
+    config_path = os.path.join(os.path.dirname(__file__), 'stream_config.json')
+    try:
+        with open(config_path, 'r') as f:
+            stream_config = json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="stream_config.json not found")
+    
+    # Build inputs from hardware probe + channels
+    inputs = {}
+    if sentinel_service:
+        devices = sentinel_service.hardware_registry
+        for device_id, device_info in devices.items():
+            device_name = device_info.get('info', {}).get('name', f'Device {device_id}')
+            
+            # Determine which channels this device has
+            device_key = 'default'
+            if 'mini' in device_name.lower():
+                device_key = 'decklink_mini'
+            elif '4k' in device_name.lower():
+                device_key = 'decklink_4k'
+            
+            channel_nums = stream_config['device_channels'].get(device_key, 
+                                stream_config['device_channels']['default'])
+            
+            # Build channel list for this device
+            channels = []
+            for ch_num in channel_nums:
+                # Get signal status from device (if available)
+                signal_present = device_info.get('status') == 'IDLE' or device_info.get('status') == 'STREAMING'
+                format_info = device_info.get('info', {}).get('display_mode', 'Unknown')
+                
+                channels.append({
+                    "id": f"{device_id}_ch{ch_num}",
+                    "channelNumber": ch_num,
+                    "signalStatus": "present" if signal_present else "none",
+                    "format": format_info if signal_present else None,
+                    "selectable": signal_present
+                })
+            
+            inputs[device_id] = {
+                "id": device_id,
+                "name": device_name,
+                "channels": channels
+            }
+    
+    return {
+        "inputs": inputs,
+        "destinations": stream_config['destinations'],
+        "presets": stream_config['presets']
+    }
+
 
 class SentinelConfigRequest(BaseModel):
     selected_device_id: int

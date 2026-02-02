@@ -1,0 +1,113 @@
+{
+    "destinations": {
+        "youtube": {
+            "name": "YouTube",
+            "icon": "youtube",
+            "streams": [
+                {
+                    "id": "main",
+                    "name": "Main Stream",
+                    "key": "live_main_abc123",
+                    "description": "Primary YouTube stream"
+                },
+                {
+                    "id": "backup",
+                    "name": "Backup Stream",
+                    "key": "live_backup_xyz789",
+                    "description": "Backup YouTube stream"
+                }
+            ]
+        },
+        "facebook": {
+            "name": "Facebook",
+            "icon": "facebook",
+            "streams": [
+                {
+                    "id": "fb1",
+                    "name": "FB Live 1",
+                    "key": "fb_stream1_abc456",
+                    "description": "Facebook Live stream 1"
+                },
+                {
+                    "id": "fb2",
+                    "name": "FB Live 2",
+                    "key": "fb_stream2_def789",
+                    "description": "Facebook Live stream 2"
+                }
+            ]
+        }
+    },
+    "presets": {
+        "hd": {
+            "name": "HD (1080p)",
+            "resolution": "1920x1080",
+            "variants": [
+                {
+                    "id": "hd_high",
+                    "name": "High",
+                    "bitrate": 6000,
+                    "fps": 60,
+                    "description": "6000 kbps, 60fps"
+                },
+                {
+                    "id": "hd_med",
+                    "name": "Medium",
+                    "bitrate": 4500,
+                    "fps": 60,
+                    "description": "4500 kbps, 60fps"
+                },
+                {
+                    "id": "hd_low",
+                    "name": "Low",
+                    "bitrate": 3000,
+                    "fps": 30,
+                    "description": "3000 kbps, 30fps"
+                }
+            ]
+        },
+        "sd": {
+            "name": "SD (480p)",
+            "resolution": "720x480",
+            "variants": [
+                {
+                    "id": "sd_high",
+                    "name": "High",
+                    "bitrate": 2500,
+                    "fps": 30,
+                    "description": "2500 kbps, 30fps"
+                },
+                {
+                    "id": "sd_med",
+                    "name": "Medium",
+                    "bitrate": 1800,
+                    "fps": 30,
+                    "description": "1800 kbps, 30fps"
+                },
+                {
+                    "id": "sd_low",
+                    "name": "Low",
+                    "bitrate": 1200,
+                    "fps": 30,
+                    "description": "1200 kbps, 30fps"
+                }
+            ]
+        }
+    },
+    "device_channels": {
+        "default": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "decklink_4k": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "decklink_mini": [
+            1
+        ]
+    }
+}
