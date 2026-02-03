@@ -3,18 +3,13 @@
         "youtube": {
             "name": "YouTube",
             "icon": "youtube",
+            "rtmp_url": "rtmp://a.rtmp.youtube.com/live2",
             "streams": [
                 {
                     "id": "main",
-                    "name": "Main Stream",
-                    "key": "live_main_abc123",
-                    "description": "Primary YouTube stream"
-                },
-                {
-                    "id": "backup",
-                    "name": "Backup Stream",
-                    "key": "live_backup_xyz789",
-                    "description": "Backup YouTube stream"
+                    "name": "Seithigal Live Stream",
+                    "key": "vp7t-pgj0-xak0-ar5t-1w7u",
+                    "description": "Primary YouTube Live stream"
                 }
             ]
         },
