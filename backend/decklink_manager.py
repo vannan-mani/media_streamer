@@ -14,8 +14,10 @@ class DeckLinkManager:
     
     def __init__(self):
         logger.info("Initializing DeckLinkManager (SDK Mode)")
-        # Path to the compiled SDK tool for Ubuntu
-        self.sdk_tool_path = os.path.join(os.path.dirname(__file__), "cpp", "sentinel-probe")
+        # Robust pathing: look in same dir as this file
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.sdk_tool_path = os.path.join(base_dir, "cpp", "sentinel-probe")
+        logger.info(f"Sentinel SDK Probe path configured: {self.sdk_tool_path}")
         
     def get_devices(self, ignore_indices: List[int] = None) -> List[Dict]:
         """
@@ -27,18 +29,30 @@ class DeckLinkManager:
         # Attempt discovery via C++ SDK tool (Ubuntu)
         if os.path.exists(self.sdk_tool_path):
             try:
-                logger.info(f"Running Sentinel SDK Probe at {self.sdk_tool_path}")
-                result = subprocess.run([self.sdk_tool_path], capture_output=True, text=True, timeout=2)
+                logger.debug(f"Executing Sentinel SDK Probe: {self.sdk_tool_path}")
+                result = subprocess.run([self.sdk_tool_path], capture_output=True, text=True, timeout=3)
+                
                 if result.returncode == 0:
-                    devices = json.loads(result.stdout)
+                    output = result.stdout.strip()
+                    if not output:
+                        logger.warning("Sentinel Probe returned empty output.")
+                        return []
+                    
+                    devices = json.loads(output)
+                    logger.info(f"Sentinel Probe discovered {len(devices)} devices.")
                     # Filter ignored indices
-                    return [d for d in devices if d['device_number'] not in ignore_indices]
+                    return [d for d in devices if d.get('device_number') not in ignore_indices]
                 else:
-                    logger.error(f"Sentinel Probe failed with code {result.returncode}: {result.stderr}")
+                    logger.error(f"Sentinel Probe ERROR (code {result.returncode})")
+                    logger.error(f"STDERR: {result.stderr}")
+            except json.JSONDecodeError as je:
+                logger.error(f"Sentinel Probe returned invalid JSON: {je}")
+                logger.error(f"Raw output: {result.stdout}")
             except Exception as e:
                 logger.error(f"Sentinel Probe execution error: {e}")
         else:
-            logger.warning(f"Sentinel Probe binary not found at {self.sdk_tool_path}. No hardware discovered.")
+            logger.error(f"CRITICAL: Sentinel Probe binary NOT FOUND at {self.sdk_tool_path}")
+            logger.info("Please ensure you compiled StatusMonitor.cpp into 'sentinel-probe'")
 
         return []
     
