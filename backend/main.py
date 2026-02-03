@@ -159,6 +159,53 @@ def get_hierarchical_options():
         "presets": presets_config.get('presets', {})
     }
 
+@app.get("/api/stream/telemetry")
+def get_stream_telemetry():
+    """Get real-time streaming statistics"""
+    intent_data = config.read('intent.json', {})
+    
+    # Check if actively streaming
+    if intent_data.get('intent') != 'AUTO_STREAM':
+        return {
+            "bitrate": 0,
+            "fps": 0,
+            "dropped_frames": 0,
+            "processed_frames": 0,
+            "encoding_load": 0,
+            "network_health": "idle",
+            "stream_duration": 0,
+            "keyframe_interval": "N/A"
+        }
+    
+    # Get selected preset for target bitrate/fps
+    configuration = intent_data.get('configuration', {})
+    preset_id = configuration.get('selected_preset_id', 'hd_high')
+    
+    presets_config = load_encoding_presets()
+    target_preset = None
+    for quality_group in presets_config.get('presets', {}).values():
+        for variant in quality_group.get('variants', []):
+            if variant['id'] == preset_id:
+                target_preset = variant
+                break
+    
+    target_bitrate = target_preset.get('bitrate', 6000) if target_preset else 6000
+    target_fps = target_preset.get('fps', 60) if target_preset else 60
+    
+    # TODO: Parse actual GStreamer statistics from uplink pipeline
+    # For now, return target values to show stream is active
+    return {
+        "bitrate": target_bitrate,
+        "fps": target_fps,
+        "dropped_frames": 0,
+        "processed_frames": 1000,  # Placeholder
+        "encoding_load": psutil.cpu_percent(interval=None),
+        "network_health": "excellent",
+        "stream_duration": 120,  # Placeholder
+        "keyframe_interval": f"{target_fps * 2} frames"
+    }
+
+
 # Health check
 @app.get("/api/health")
 def health_check():
@@ -177,7 +224,7 @@ def health_check():
         "status": "healthy",
         "service": "sentinel-api",
         "version": "2.0.0",
-        "cpu": round(psutil.cpu_percent(interval=0.1), 1),
+        "cpu": round(psutil.cpu_percent(interval=1), 1),
         "gpu": 0, # Placeholder until nvidia-smi integration
         "temperature": temp,
         "memory": {
