@@ -29,6 +29,7 @@ class UDPPipelineManager:
         """
         pipeline = f"""
         decklinkvideosrc device-number={device_number} connection=sdi mode=auto
+        ! videoconvert
         ! video/x-raw,format=UYVY
         ! identity silent=false name=debug_logger
         ! rtpvrawpay mtu=9000
