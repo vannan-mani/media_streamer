@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 from shared.logger import setup_logger
+from shared.config_manager import ConfigManager
 
 logger = setup_logger('rtmp-pipeline')
 
@@ -131,10 +132,11 @@ class RTMPPipelineManager:
         """Monitor GStreamer pipeline stderr for statistics"""
         import re
         import time
-        from shared.config_manager import ConfigManager
         
         # Use shared config manager to write stats
         stats_mgr = ConfigManager()
+        
+        logger.info("Stats monitoring thread started")
         
         stats = {
             'fps': 0.0,
@@ -196,6 +198,7 @@ class RTMPPipelineManager:
 
                     # Write stats
                     stats_mgr.write('stream_stats.json', stats)
+                    logger.debug(f"Stats: FPS={stats['fps']}, Bitrate={stats['bitrate']}kbps, Frames={stats['frames_processed']}")
                     
         except Exception as e:
             logger.error(f"Stats monitoring error: {e}")
