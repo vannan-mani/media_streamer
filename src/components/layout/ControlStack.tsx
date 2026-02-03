@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ControlStack.css';
 import { useSentinel } from '../../hooks/useSentinel';
 
@@ -23,6 +23,16 @@ const ControlStack: React.FC = () => {
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
     const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null);
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+    // Sync selection state with backend configuration on load
+    useEffect(() => {
+        if (state?.settings) {
+            const { selected_input_id, selected_destination_id, selected_preset_id } = state.settings;
+            if (selected_input_id) setSelectedChannelId(selected_input_id);
+            if (selected_destination_id) setSelectedStreamId(selected_destination_id);
+            if (selected_preset_id) setSelectedVariantId(selected_preset_id);
+        }
+    }, [state?.settings.selected_input_id, state?.settings.selected_destination_id, state?.settings.selected_preset_id]);
 
     const intent = state?.intent ?? 'DISABLED';
     const systemStatus = state?.system_status ?? 'Initializing...';
