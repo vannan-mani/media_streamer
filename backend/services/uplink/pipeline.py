@@ -37,15 +37,20 @@ class RTMPPipelineManager:
         bitrate = preset.get('bitrate', 4500)  # kbps
         fps = preset.get('fps', 60)
         
+        # Use rtpbin for proper RTP session management
         pipeline = f"""
-        udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo"
-        ! rtpvrawdepay ! videoconvert ! queue max-size-buffers=3 leaky=downstream
+        rtpbin name=rtp latency=0
+        
+        udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="application/x-rtp"
+        ! rtp.recv_rtp_sink_0
+        rtp. ! rtpvrawdepay ! videoconvert ! queue max-size-buffers=3 leaky=downstream
         ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
         ! video/x-h264,profile=high
         ! h264parse ! queue name=v_enc
         
-        udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo"
-        ! rtpL16depay ! audioconvert ! audioresample ! queue max-size-buffers=3 leaky=downstream
+        udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo" caps="application/x-rtp"
+        ! rtp.recv_rtp_sink_1
+        rtp. ! rtpL16depay ! audioconvert ! audioresample ! queue max-size-buffers=3 leaky=downstream
         ! avenc_aac bitrate=128000
         ! aacparse ! queue name=a_enc
         
