@@ -158,9 +158,26 @@ def get_hierarchical_options():
     }
 
 # Health check
-@app.get("/health")
+@app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "sentinel-api", "version": "2.0.0"}
+    import psutil
+    
+    mem = psutil.virtual_memory()
+    freq = psutil.cpu_freq()
+    
+    return {
+        "status": "healthy",
+        "service": "sentinel-api",
+        "version": "2.0.0",
+        "cpu": psutil.cpu_percent(interval=None),
+        "gpu": 0, # Placeholder until nvidia-smi integration
+        "temperature": 45, # Placeholder
+        "memory": {
+            "used": mem.used,
+            "total": mem.total,
+            "percent": mem.percent
+        }
+    }
 
 # Serve frontend
 dist_path = os.path.join(os.path.dirname(__file__), "../dist")

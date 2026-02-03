@@ -9,7 +9,11 @@ import GlassCard from '../common/GlassCard';
 import { useHealthData } from '../../hooks/useHealthData';
 import Sparkline from '../common/Sparkline';
 
-const StatusStrip: React.FC = () => {
+interface StatusStripProps {
+    systemStatus?: string;
+}
+
+const StatusStrip: React.FC<StatusStripProps> = ({ systemStatus = 'Initializing...' }) => {
     const { healthData, history } = useHealthData();
 
     // Map health metrics to array with correct key names from HealthData interface
@@ -48,12 +52,14 @@ const StatusStrip: React.FC = () => {
         <GlassCard>
             <div className="status-strip">
                 <div className="status-strip-main">
-                    <div className="status-time">18:44:31</div>
+                    <div className="status-time">{new Date().toLocaleTimeString()}</div>
                     <div className="status-recording">
-                        <span className="status-pulse"></span>
-                        REC
+                        <span className={`status-pulse ${systemStatus === 'Streaming Live' ? 'active' : ''}`}></span>
+                        {systemStatus === 'Streaming Live' ? 'LIVE' : 'READY'}
                     </div>
-                    <div className="status-endpoint">YOUTUBE RTMP — 1080p60</div>
+                    <div className="status-endpoint" style={{ textTransform: 'uppercase' }}>
+                        {systemStatus}
+                    </div>
                 </div>
 
                 <div className="status-strip-details">

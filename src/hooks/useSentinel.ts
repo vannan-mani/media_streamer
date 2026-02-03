@@ -147,7 +147,7 @@ export const useSentinel = () => {
             await fetch('/api/sentinel/intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action }),
+                body: JSON.stringify({ intent: action }),
             });
             // Optimistic update
             setState(prev => prev ? { ...prev, intent: action } : null);
@@ -164,7 +164,7 @@ export const useSentinel = () => {
         presetId: string
     ) => {
         try {
-            await fetch('/api/sentinel/config', {
+            await fetch('/api/sentinel/configure', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

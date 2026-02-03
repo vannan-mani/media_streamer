@@ -66,8 +66,13 @@ const ControlStack: React.FC = () => {
     };
 
     const updateBackendConfig = (channelId: string, streamId: string, variantId: string) => {
-        // Extract device ID from channel ID (format: "deviceId_chX" or "input_X")
-        const deviceId = parseInt(channelId.split('_')[0]) || 0;
+        // Extract device ID from channel ID (format: "decklink_0_input_0")
+        // We need to parse the number after "decklink_" and before "_input"
+        let deviceId = 0;
+        const match = channelId.match(/decklink_(\d+)/);
+        if (match && match[1]) {
+            deviceId = parseInt(match[1], 10);
+        }
 
         // Build destination_id in format "platform:stream"
         // streamId is now the platform_stream pair (e.g., "youtube:main")
