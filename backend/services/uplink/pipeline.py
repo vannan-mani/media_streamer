@@ -62,11 +62,8 @@ class RTMPPipelineManager:
         
         # Use progressreport for reliable statistics
         pipeline = f"""
-        rtpbin name=rtp latency=0
-        
         udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="{video_caps}"
-        ! rtp.recv_rtp_sink_0
-        rtp. ! rtpvrawdepay ! videoconvert 
+        ! rtpvrawdepay ! videoconvert 
         ! videoscale ! video/x-raw,width={width},height={height}
         ! progressreport name=video_stats update-freq=1 silent=false 
         ! queue max-size-buffers=3 leaky=downstream 
@@ -74,8 +71,7 @@ class RTMPPipelineManager:
         ! video/x-h264,profile=high ! h264parse ! queue name=v_enc
         
         udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo" caps="application/x-rtp"
-        ! rtp.recv_rtp_sink_1
-        rtp. ! rtpL16depay ! audioconvert ! audioresample 
+        ! rtpL16depay ! audioconvert ! audioresample 
         ! progressreport name=audio_stats update-freq=1 silent=false 
         ! queue max-size-buffers=3 leaky=downstream
         ! avenc_aac bitrate=128000
