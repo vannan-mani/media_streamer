@@ -96,7 +96,7 @@ export const useSentinel = () => {
     // 3-level hierarchical data (current)
     const [inputDevices, setInputDevices] = useState<Record<string, InputDevice>>({});
     const [destinations, setDestinations] = useState<Record<string, DestinationPlatform>>({});
-    const [encodingPresets, setEncodingPresets] = useState<Record<string, EncodingQuality>>({});
+    const [encodingPresets, setEncodingPresets] = useState<Record<string, PresetQuality>>({});
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -204,10 +204,6 @@ export const useSentinel = () => {
 
     return {
         state,
-        channels,
-        presets,
-        endpoints,
-        presetsGrouped,
         // 3-level hierarchical data
         inputDevices,
         destinations,
