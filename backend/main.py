@@ -224,54 +224,50 @@ def get_sentinel_options_hierarchical():
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail="stream_config.json not found")
     
-    # Build inputs from hardware probe (use ACTUAL hardware inputs, not config)
+    # Build inputs from hardware probe using decklink_mgr directly (SDK-based)
     inputs = {}
-    if sentinel_service:
-        devices = sentinel_service.hardware_registry
-        for device_id, device_info in devices.items():
-            device_name = device_info.get('info', {}).get('name', f'Device {device_id}')
-            
-            # Use ACTUAL hardware inputs detected from the device
-            # The inputs array is inside 'info' because Sentinel stores full device at ['info']
-            channels = []
-            device_info_data = device_info.get('info', {})
-            device_inputs = device_info_data.get('inputs', [])
-            
-            if device_inputs:
-                # Device has input detection - use actual inputs
-                for inp in device_inputs:
-                    port_name = inp.get('port', 'SDI 1')
-                    # Extract channel number from port name (e.g., "SDI 1" -> 1)
-                    try:
-                        ch_num = int(port_name.replace('SDI', '').replace('Input', '').strip())
-                    except:
-                        ch_num = 1
-                    
-                    channels.append({
-                        "id": f"{device_id}_ch{ch_num}",
-                        "channelNumber": ch_num,
-                        "signalStatus": "present" if inp.get('signal_detected') else "none",
-                        "format": inp.get('format'),
-                        "selectable": inp.get('signal_detected', False)
-                    })
-            else:
-                # Fallback: Device doesn't report inputs, create single channel
-                signal_present = device_info.get('status') in ['IDLE', 'STREAMING']
-                format_info = device_info.get('info', {}).get('display_mode', 'Unknown')
+    
+    # Use decklink_mgr directly - works even without GStreamer
+    devices = decklink_mgr.get_devices() if decklink_mgr else []
+    logger.info(f"Hardware discovery returned {len(devices)} devices")
+    
+    for device in devices:
+        device_id = device.get('id', f"decklink_{device.get('device_number', 0)}")
+        device_name = device.get('name', f'DeckLink Device')
+        
+        # Build channels from the inputs array returned by sentinel-probe
+        channels = []
+        device_inputs = device.get('inputs', [])
+        
+        if device_inputs:
+            for inp in device_inputs:
+                port_name = inp.get('port', 'SDI')
+                signal_detected = inp.get('signal_detected', False)
                 
                 channels.append({
-                    "id": f"{device_id}_ch1",
+                    "id": inp.get('id', f"{device_id}_ch1"),
                     "channelNumber": 1,
-                    "signalStatus": "present" if signal_present else "none",
-                    "format": format_info if signal_present else None,
-                    "selectable": signal_present
+                    "signalStatus": "present" if signal_detected else "none",
+                    "format": inp.get('format', 'No Signal'),
+                    "selectable": signal_detected
                 })
-            
-            inputs[device_id] = {
-                "id": str(device_id),
-                "name": device_name,
-                "channels": channels
-            }
+        else:
+            # No inputs array - create a default channel
+            channels.append({
+                "id": f"{device_id}_ch1",
+                "channelNumber": 1,
+                "signalStatus": "none",
+                "format": "No Signal",
+                "selectable": False
+            })
+        
+        inputs[device_id] = {
+            "id": str(device_id),
+            "name": device_name,
+            "channels": channels,
+            "temperature": device.get('temperature'),
+            "pcie_width": device.get('pcie_width')
+        }
     
     # Restoring NDI Source as a placeholder (Capability Mock)
     inputs["ndi"] = {
