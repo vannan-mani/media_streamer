@@ -61,9 +61,10 @@ class RTMPPipelineManager:
         )
         
         # Use progressreport for reliable statistics
+        # Added videorate to handle variable/0/1 framerate inputs gracefully
         pipeline = f"""
         udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="{video_caps}"
-        ! rtpvrawdepay ! videoconvert 
+        ! rtpvrawdepay ! videoconvert ! videorate
         ! video/x-raw,framerate={src_fps}/1
         ! videoscale ! video/x-raw,width={width},height={height}
         ! progressreport name=video_stats update-freq=1 silent=false 
@@ -108,7 +109,9 @@ class RTMPPipelineManager:
                 logger.info("Starting RTMP stream")
             
             # Redirect stdout+stderr to log file (progressreport outputs to stdout)
-            stderr_log = os.path.join(tempfile.gettempdir(), f"gst_output_{os.getpid()}.log")
+            # Use timestamp to ensure unique log file per attempt if service restarts
+            log_id = f"{os.getpid()}_{int(time.time())}"
+            stderr_log = os.path.join(tempfile.gettempdir(), f"gst_output_{log_id}.log")
             
             logger.info(f"GStreamer output will be logged to: {stderr_log}")
             
@@ -143,7 +146,7 @@ class RTMPPipelineManager:
             # Start statistics monitoring thread
             stats_thread = threading.Thread(
                 target=self._monitor_pipeline_stats,
-                args=(stderr_log, src_fps, bitrate),
+                args=(stderr_log, src_fps, bitrate, process),
                 daemon=True
             )
             stats_thread.start()
@@ -165,7 +168,7 @@ class RTMPPipelineManager:
             del self.active_pipelines[pid]
         return False
     
-    def _monitor_pipeline_stats(self, stderr_log_path, src_fps=30, bitrate=4500):
+    def _monitor_pipeline_stats(self, stderr_log_path, src_fps=30, bitrate=4500, process=None):
         """Monitor GStreamer pipeline stderr from log file"""
         import re
         import time
@@ -208,13 +211,18 @@ class RTMPPipelineManager:
                 f.seek(0)
                 
                 while True:
+                    # Check periodically if the process we are monitoring is still running
+                    if process and process.poll() is not None:
+                        logger.warning(f"Process {process.pid} stopped. Monitoring thread exiting.")
+                        break
+                        
                     line = f.readline()
                     
                     if not line:
                         # No new data, sleep briefly
-                        time.sleep(0.01)
+                        time.sleep(0.1)
                         continue
-                    
+                        
                     line_count += 1
                     
                     # Log every 100 lines to show activity
