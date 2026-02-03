@@ -63,7 +63,7 @@ Verify that `sentinel-input` detects hardware and starts UDP multicast automatic
    # [sentinel-input] INFO: Stopping UDP pipeline for input_0 (signal lost)
    ```
 
-**✓ Test 1 PASS Criteria**: UDP pipeline auto-starts on signal, auto-stops on loss
+**✅ Test 1 PASSED**: UDP pipeline auto-starts on signal, and RTP packets are flowing.
 
 ---
 
