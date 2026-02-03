@@ -42,7 +42,12 @@ echo "[5/7] Configuring local multicast routing..."
 sudo ip link set lo multicast on
 # Add specific host route for our multicast group (Priority over /4)
 sudo ip route add 239.0.0.1/32 dev lo metric 0 2>/dev/null || true
-echo " ✓ Multicast enabled on loopback (lo)"
+
+# Disable Reverse Path Filtering for Loopback (Crucial for local multicast)
+sudo sysctl -w net.ipv4.conf.lo.rp_filter=0 >/dev/null
+sudo sysctl -w net.ipv4.conf.all.rp_filter=0 >/dev/null
+
+echo " ✓ Multicast enabled on loopback (lo) + rp_filter disabled"
 
 # Step 6: Enable and start services
 echo ""
