@@ -40,7 +40,8 @@ echo " ✓ Services installed"
 echo ""
 echo "[5/7] Configuring local multicast routing..."
 sudo ip link set lo multicast on
-sudo ip route add 224.0.0.0/4 dev lo metric 1 2>/dev/null || true
+# Add specific host route for our multicast group (Priority over /4)
+sudo ip route add 239.0.0.1/32 dev lo metric 0 2>/dev/null || true
 echo " ✓ Multicast enabled on loopback (lo)"
 
 # Step 6: Enable and start services
