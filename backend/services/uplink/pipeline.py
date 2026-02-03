@@ -88,15 +88,18 @@ class RTMPPipelineManager:
             logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
             
             # Use shell=True because pipeline_str contains complex quoted arguments
-            # Set GST_DEBUG to enable identity element logging
-            cmd = f"GST_DEBUG=identity:5,fpsdisplaysink:5 gst-launch-1.0 {pipeline_str}"
+            # Redirect stderr to a log file since shell=True prevents direct stderr pipe access
+            import tempfile
+            stderr_log = os.path.join(tempfile.gettempdir(), f"gst_stderr_{os.getpid()}.log")
+            
+            # Set GST_DEBUG and redirect stderr to file
+            cmd = f"GST_DEBUG=identity:5,fpsdisplaysink:5 gst-launch-1.0 {pipeline_str} 2>{stderr_log}"
             
             process = subprocess.Popen(
                 cmd,
                 shell=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
+                stderr=subprocess.DEVNULL,  # Redirected to file instead
                 preexec_fn=os.setsid if os.name != 'nt' else None
             )
             
@@ -105,7 +108,7 @@ class RTMPPipelineManager:
             # Start statistics monitoring thread
             stats_thread = threading.Thread(
                 target=self._monitor_pipeline_stats,
-                args=(process,),
+                args=(stderr_log,),  # Pass log file path instead of process
                 daemon=True
             )
             stats_thread.start()
@@ -127,15 +130,15 @@ class RTMPPipelineManager:
             del self.active_pipelines[pid]
         return False
     
-    def _monitor_pipeline_stats(self, process):
-        """Monitor GStreamer pipeline stderr for statistics"""
+    def _monitor_pipeline_stats(self, stderr_log_path):
+        """Monitor GStreamer pipeline stderr from log file"""
         import re
         import time
         
         # Use shared config manager to write stats
         stats_mgr = ConfigManager()
         
-        logger.info("Stats monitoring thread started")
+        logger.info(f"Stats monitoring thread started, tailing {stderr_log_path}")
         
         stats = {
             'fps': 0.0,
@@ -151,70 +154,84 @@ class RTMPPipelineManager:
         last_byte_update = time.time()
         line_count = 0
         
+        # Wait for log file to be created
+        max_wait = 5
+        waited = 0
+        while not os.path.exists(stderr_log_path) and waited < max_wait:
+            time.sleep(0.1)
+            waited += 0.1
+        
+        if not os.path.exists(stderr_log_path):
+            logger.error(f"Log file {stderr_log_path} never created!")
+            return
+        
         logger.info("Entering stderr read loop...")
         
         try:
-            # We need to make sure GStreamer outputs stats to stderr
-            # identity silent=false outputs to stderr
-            for line in iter(process.stderr.readline, ''):
-                if not line:
-                    logger.warning("Received empty line, breaking")
-                    break
+            with open(stderr_log_path, 'r') as f:
+                # Start at beginning of file
+                f.seek(0)
                 
-                line_count += 1
-                
-                # Log every 100 lines to show activity
-                if line_count % 100 == 0:
-                    logger.info(f"Read {line_count} lines from stderr")
-                
-                # Log first few lines to verify output
-                if line_count <= 5:
-                    logger.debug(f"stderr line {line_count}: {line[:100]}")
-                
-                # Parse identity stats for frame counts and bytes
-                # identity format: /GstPipeline:pipeline0/GstIdentity:video_stats: chain******* (num_bytes bytes, ...)
-                if 'video_stats' in line and 'chain' in line:
-                    logger.debug(f"Found video_stats line")
-                    size_match = re.search(r'\((\d+)\s+bytes', line)
-                    if size_match:
-                        size = int(size_match.group(1))
-                        byte_count += size
-                        stats['frames_processed'] += 1
-                        logger.debug(f"Parsed frame: size={size}, total_frames={stats['frames_processed']}")
-                
-                # Parse FPS from fpsdisplaysink (if it logs)
-                # rendered: 12, dropped: 0, current-fps: 30.00, average-fps: 30.00
-                fps_match = re.search(r'rendered:\s*(\d+),\s*dropped:\s*(\d+),\s*fps:\s*([\d.]+)', line)
-                if not fps_match:
-                    fps_match = re.search(r'current-fps:\s*([\d.]+)', line)
-                
-                if fps_match:
-                    logger.debug(f"Found FPS line")
-                    if len(fps_match.groups()) >= 3:
-                        stats['frames_processed'] = int(fps_match.group(1))
-                        stats['frames_dropped'] = int(fps_match.group(2))
-                        stats['fps'] = float(fps_match.group(3))
-                    else:
-                        stats['fps'] = float(fps_match.group(1))
-                
-                # Update duration
-                current_time = time.time()
-                stats['stream_duration'] = int(current_time - start_time)
-                stats['last_update'] = current_time
-                
-                # Calculate actual bitrate every second
-                if current_time - last_byte_update >= 1.0:
-                    stats['bitrate'] = int((byte_count * 8) / (current_time - last_byte_update) / 1024)  # kbps
-                    byte_count = 0
-                    last_byte_update = current_time
+                while True:
+                    line = f.readline()
                     
-                    # Also update FPS if not getting it from fpsdisplaysink
-                    if stats['fps'] == 0 and stats['stream_duration'] > 0:
-                        stats['fps'] = round(stats['frames_processed'] / stats['stream_duration'], 1)
+                    if not line:
+                        # No new data, sleep briefly
+                        time.sleep(0.01)
+                        continue
+                    
+                    line_count += 1
+                    
+                    # Log every 100 lines to show activity
+                    if line_count % 100 == 0:
+                        logger.info(f"Read {line_count} lines from stderr")
+                    
+                    # Log first few lines to verify output
+                    if line_count <= 5:
+                        logger.debug(f"stderr line {line_count}: {line[:100]}")
+                    
+                    # Parse identity stats for frame counts and bytes
+                    if 'video_stats' in line and 'chain' in line:
+                        logger.debug(f"Found video_stats line")
+                        size_match = re.search(r'\((\d+)\s+bytes', line)
+                        if size_match:
+                            size = int(size_match.group(1))
+                            byte_count += size
+                            stats['frames_processed'] += 1
+                            logger.debug(f"Parsed frame: size={size}, total_frames={stats['frames_processed']}")
+                    
+                    # Parse FPS from fpsdisplaysink
+                    fps_match = re.search(r'rendered:\s*(\d+),\s*dropped:\s*(\d+),\s*fps:\s*([\d.]+)', line)
+                    if not fps_match:
+                        fps_match = re.search(r'current-fps:\s*([\d.]+)', line)
+                    
+                    if fps_match:
+                        logger.debug(f"Found FPS line")
+                        if len(fps_match.groups()) >= 3:
+                            stats['frames_processed'] = int(fps_match.group(1))
+                            stats['frames_dropped'] = int(fps_match.group(2))
+                            stats['fps'] = float(fps_match.group(3))
+                        else:
+                            stats['fps'] = float(fps_match.group(1))
+                    
+                    # Update duration
+                    current_time = time.time()
+                    stats['stream_duration'] = int(current_time - start_time)
+                    stats['last_update'] = current_time
+                    
+                    # Calculate actual bitrate every second
+                    if current_time - last_byte_update >= 1.0:
+                        stats['bitrate'] = int((byte_count * 8) / (current_time - last_byte_update) / 1024)  # kbps
+                        byte_count = 0
+                        last_byte_update = current_time
+                        
+                        # Also update FPS if not getting it from fpsdisplaysink
+                        if stats['fps'] == 0 and stats['stream_duration'] > 0:
+                            stats['fps'] = round(stats['frames_processed'] / stats['stream_duration'], 1)
 
-                    # Write stats
-                    logger.info(f"Writing stats: FPS={stats['fps']}, Bitrate={stats['bitrate']}kbps, Frames={stats['frames_processed']}")
-                    stats_mgr.write('stream_stats.json', stats)
+                        # Write stats
+                        logger.info(f"Writing stats: FPS={stats['fps']}, Bitrate={stats['bitrate']}kbps, Frames={stats['frames_processed']}")
+                        stats_mgr.write('stream_stats.json', stats)
                     
         except Exception as e:
             logger.error(f"Stats monitoring error: {e}", exc_info=True)
