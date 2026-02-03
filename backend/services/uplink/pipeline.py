@@ -136,6 +136,10 @@ class RTMPPipelineManager:
             
             self.active_pipelines[process.pid] = process
             
+            # Define variables for stats thread (previously missing in this scope)
+            bitrate = preset.get('bitrate', 4500)
+            src_fps = input_config.get('fps', 60) if input_config else 60
+            
             # Start statistics monitoring thread
             stats_thread = threading.Thread(
                 target=self._monitor_pipeline_stats,
