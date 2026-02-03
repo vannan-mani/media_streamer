@@ -39,14 +39,12 @@ class RTMPPipelineManager:
         
         pipeline = f"""
         udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo"
-            caps="application/x-rtp,media=video,encoding-name=RAW,clock-rate=90000"
         ! rtpvrawdepay ! videoconvert ! queue max-size-buffers=3 leaky=downstream
         ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
         ! video/x-h264,profile=high
         ! h264parse ! queue name=v_enc
         
         udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo"
-            caps="application/x-rtp,media=audio,encoding-name=L16,clock-rate=48000"
         ! rtpL16depay ! audioconvert ! audioresample ! queue max-size-buffers=3 leaky=downstream
         ! avenc_aac bitrate=128000
         ! aacparse ! queue name=a_enc
