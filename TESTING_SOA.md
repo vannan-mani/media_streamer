@@ -50,11 +50,18 @@ Verify that `sentinel-input` detects hardware and starts UDP multicast automatic
    **Expected**: JSON with detected devices and UDP ports
 
 4. **Verify UDP multicast** (on a second terminal)
+   
+   **Option A: Check with tcpdump (Best for verifying traffic exists)**
    ```bash
-   # Test video stream
-   gst-launch-1.0 udpsrc multicast-group=239.0.0.1 port=5000 caps="application/x-rtp" ! fakesink silent=false -v
+   sudo tcpdump -i lo udp port 5000 -n
+   # Expected: rapid scrolling of packets
    ```
-   **Expected**: See RTP packets flowing
+
+   **Option B: Check with GStreamer (Explicit Loopback Receive)**
+   ```bash
+   gst-launch-1.0 udpsrc multicast-group=239.0.0.1 port=5000 multicast-iface="lo" caps="application/x-rtp" ! fakesink silent=false -v
+   ```
+   **Expected**: rapid scrolling of `chain *******` messages
 
 5. **Stop Test**
    ```bash

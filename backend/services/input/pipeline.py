@@ -31,13 +31,13 @@ class UDPPipelineManager:
         decklinkvideosrc device-number={device_number} connection=sdi mode=auto
         ! video/x-raw,format=UYVY
         ! rtpvrawpay mtu=9000
-        ! udpsink host={multicast_ip} port={video_port} auto-multicast=true ttl-mc=1 async=false
+        ! udpsink host={multicast_ip} port={video_port} auto-multicast=true ttl-mc=1 async=false multicast-iface="lo"
         
         decklinkaudiosrc device-number={device_number}
         ! audioconvert ! audioresample
         ! audio/x-raw,format=S16BE,channels=2,rate=48000
         ! rtpL16pay mtu=1400
-        ! udpsink host={multicast_ip} port={audio_port} auto-multicast=true ttl-mc=1 async=false
+        ! udpsink host={multicast_ip} port={audio_port} auto-multicast=true ttl-mc=1 async=false multicast-iface="lo"
         """
         return ' '.join(pipeline.split())
     
