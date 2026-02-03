@@ -29,10 +29,10 @@ echo "🔍 First 20 lines:"
 head -20 "$LOG_FILE"
 echo ""
 
-echo "🔍 Lines containing 'video_stats':"
+echo "🔍 Lines containing 'video_stats' (progressreport):"
 grep "video_stats" "$LOG_FILE" | head -5 || echo "❌ No video_stats lines found"
 echo ""
 
 echo "🔍 Lines containing 'fps':"
-grep -i "fps" "$LOG_FILE" | head -5 || echo "❌ No fps lines found"
+grep "fps" "$LOG_FILE" | head -5 || echo "❌ No fps lines found"
 echo ""

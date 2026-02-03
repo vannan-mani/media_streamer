@@ -18,9 +18,21 @@ else
 fi
 echo ""
 
-# Step 2: Check GStreamer stderr output (does identity log?)
-echo "[2/5] Checking for GStreamer debug output in uplink logs..."
-journalctl -u sentinel-uplink -n 20 --no-pager | grep -E "video_stats|chain|fps" || echo "❌ No identity/fps output found in logs"
+# Step 2: Check GStreamer log file content
+echo "[2/5] Checking for GStreamer stats in temp log..."
+LOG_FILE=$(ls -t /tmp/gst_stderr_*.log 2>/dev/null | head -1)
+if [ -z "$LOG_FILE" ]; then
+    echo "❌ No log file found!"
+else
+    echo "📁 Checking $LOG_FILE"
+    if grep -q "video_stats" "$LOG_FILE"; then
+        echo "✅ Stats found in log file:"
+        grep "video_stats" "$LOG_FILE" | tail -3
+    else
+        echo "❌ No 'video_stats' found in log file. File content (last 5 lines):"
+        tail -5 "$LOG_FILE"
+    fi
+fi
 echo ""
 
 # Step 3: Check if API returns telemetry
