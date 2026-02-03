@@ -11,6 +11,10 @@ import json
 import config
 from typing import Dict, List, Optional
 
+# Standard logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Import DeckLink hardware manager (SDK Based)
 from decklink_manager import DeckLinkManager
 
@@ -19,7 +23,7 @@ try:
     from gstreamer_manager import GStreamerManager
     GSTREAM_AVAILABLE = True
 except Exception as e:
-    logging.warning(f"GStreamer libraries not found. Streaming will be disabled, but discovery is available: {e}")
+    logger.warning(f"GStreamer libraries not found. Streaming disabled: {e}")
     GSTREAM_AVAILABLE = False
 
 app = FastAPI()
