@@ -5,27 +5,43 @@ from typing import List, Dict, Optional
 import time
 import logging
 
+import subprocess
+import json
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DeckLinkManager:
-    """Manages DeckLink device detection and enumeration using GStreamer"""
+    """Manages DeckLink device detection and enumeration using GStreamer and SDK tools"""
     
     def __init__(self):
         logger.info("Initializing DeckLinkManager")
         Gst.init(None)
+        # Path to the compiled SDK tool for Ubuntu
+        self.sdk_tool_path = os.path.join(os.path.dirname(__file__), "cpp", "StatusMonitor")
         
     def get_devices(self, ignore_indices: List[int] = None) -> List[Dict]:
         """
-        Enumerate all available DeckLink devices and their inputs
-        Returns list of devices with their input status
+        Enumerate all available DeckLink devices.
+        Attempts to use the C++ SDK tool for high-precision telemetry first.
         """
-        devices = []
         if ignore_indices is None:
             ignore_indices = []
-        
-        # We start searching for devices. 
-        # For Blackmagic Duo or Quad cards, GStreamer sees each port as a separate device-number.
+
+        # 1. Attempt deep discovery via C++ SDK tool (Ubuntu)
+        if os.path.exists(self.sdk_tool_path):
+            try:
+                logger.info(f"Running SDK discovery tool at {self.sdk_tool_path}")
+                result = subprocess.run([self.sdk_tool_path], capture_output=True, text=True, timeout=2)
+                if result.returncode == 0:
+                    devices = json.loads(result.stdout)
+                    # Filter ignored indices
+                    return [d for d in devices if d['device_number'] not in ignore_indices]
+            except Exception as e:
+                logger.warning(f"SDK tool failed: {e}. Falling back to GStreamer probe.")
+
+        # 2. Fallback to GStreamer Generic Probe
+        devices = []
         for device_num in range(16):
             if device_num in ignore_indices:
                 continue
@@ -34,22 +50,12 @@ class DeckLinkManager:
                 device_info = self._probe_device(device_num)
                 if device_info:
                     devices.append(device_info)
-                    logger.info(f"Found DeckLink hardware at index {device_num}")
                 else:
-                    # If we don't find a device at this index, we stop searching
-                    # Devices are typically zero-indexed and continuous
-                    if device_num > 0 and len(devices) == 0:
-                        # Safety break if we've checked a few and found nothing
-                        if device_num > 3: break
-                    elif device_num > 0 and device_num > (len(devices) + 2):
-                        # Break if we have a gap of more than 2
-                        break
+                    if device_num > 3 and len(devices) == 0: break
+                    elif device_num > (len(devices) + 2): break
             except Exception as e:
                 logger.debug(f"Error checking index {device_num}: {e}")
                 
-        if not devices:
-            logger.warning("No physical DeckLink hardware detected.")
-            
         return devices
     
     def _probe_device(self, device_num: int) -> Optional[Dict]:

@@ -320,15 +320,21 @@ def get_health():
         # but for now we report CPU/MEM as primary health.
         # Fallback 0 for GPU if library not present.
         gpu_usage = 0.0
+        # Try to get temperature from DeckLink first (via DeckLinkManager)
         temp = 0.0
+        if decklink_mgr:
+            devices = decklink_mgr.get_devices()
+            if devices and 'temperature' in devices[0]:
+                temp = devices[0]['temperature']
         
-        # Try to get temperature if supported
-        try:
-            temps = psutil.sensors_temperatures()
-            if temps and 'coretemp' in temps:
-                temp = temps['coretemp'][0].current
-        except:
-            pass
+        # Fallback to CPU temperature if DeckLink temp not available
+        if temp == 0.0:
+            try:
+                temps = psutil.sensors_temperatures()
+                if temps and 'coretemp' in temps:
+                    temp = temps['coretemp'][0].current
+            except:
+                pass
 
         return {
             "cpu": cpu_usage,
