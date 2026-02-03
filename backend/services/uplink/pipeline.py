@@ -100,13 +100,18 @@ class RTMPPipelineManager:
             
             logger.info(f"GStreamer output will be logged to: {stderr_log}")
             
-            # Write command to a shell script to avoid quote escaping hell
+            # Write command to a shell script with diagnostics
             script_file = os.path.join(tempfile.gettempdir(), f"gst_run_{os.getpid()}.sh")
             with open(script_file, 'w') as f:
                 f.write("#!/bin/bash\n")
-                f.write(f"exec gst-launch-1.0 {pipeline_str} &>{stderr_log}\n")
+                f.write(f"echo '[DIAG] Script started at $(date)' >> {stderr_log}\n")
+                f.write(f"echo '[DIAG] Running pipeline...' >> {stderr_log}\n")
+                f.write(f"exec gst-launch-1.0 {pipeline_str} &>>{stderr_log}\n")
             
             os.chmod(script_file, 0o755)
+            
+            # Also log the full pipeline for debugging
+            logger.info(f"Pipeline command: gst-launch-1.0 {pipeline_str[:200]}...")
             
             logger.info(f"Executing script: {script_file}")
             

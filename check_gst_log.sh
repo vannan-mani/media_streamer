@@ -6,8 +6,8 @@ echo "  GStreamer Log File Diagnostics"
 echo "======================================"
 echo ""
 
-# Find most recent gst_stderr log
-LOG_FILE=$(ls -t /tmp/gst_stderr_*.log 2>/dev/null | head -1)
+# Find most recent gst output log (check both old and new naming)
+LOG_FILE=$(ls -t /tmp/gst_output_*.log /tmp/gst_stderr_*.log 2>/dev/null | head -1)
 
 if [ -z "$LOG_FILE" ]; then
     echo "❌ No GStreamer log files found in /tmp/"

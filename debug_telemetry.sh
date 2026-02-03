@@ -20,7 +20,7 @@ echo ""
 
 # Step 2: Check GStreamer log file content
 echo "[2/5] Checking for GStreamer stats in temp log..."
-LOG_FILE=$(ls -t /tmp/gst_stderr_*.log 2>/dev/null | head -1)
+LOG_FILE=$(ls -t /tmp/gst_output_*.log /tmp/gst_stderr_*.log 2>/dev/null | head -1)
 if [ -z "$LOG_FILE" ]; then
     echo "❌ No log file found!"
 else
