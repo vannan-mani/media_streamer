@@ -108,27 +108,11 @@ export const useSentinel = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch hierarchical options
+    // Fetch hierarchical options from new JSON-based config
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                // Fetch flat data for backward compatibility
-                const flatRes = await fetch('/api/sentinel/options');
-                if (flatRes.ok) {
-                    const data = await flatRes.json();
-                    setChannels(data.channels);
-                    setPresets(data.presets);
-                }
-
-                // Fetch nested/hierarchical data (2-level - legacy)
-                const nestedRes = await fetch('/api/sentinel/options/nested');
-                if (nestedRes.ok) {
-                    const nestedData = await nestedRes.json();
-                    setEndpoints(nestedData.endpoints);
-                    setPresetsGrouped(nestedData.presets);
-                }
-
-                // Fetch 3-level hierarchical data
+                // Fetch 3-level hierarchical data (only endpoint now)
                 const hierarchicalRes = await fetch('/api/sentinel/options/hierarchical');
                 if (hierarchicalRes.ok) {
                     const hierarchicalData = await hierarchicalRes.json();

@@ -41,19 +41,24 @@ const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({
                     {platformIndex > 0 && <div className="group-divider" />}
 
                     {/* All streams from this platform as tiles */}
-                    {platform.streams.map(stream => (
-                        <NestedCard
-                            key={stream.id}
-                            title={`${getPlatformIcon(platform.id || '')} ${stream.name}`}
-                            level={3}
-                            isSelected={selectedStreamId === stream.id}
-                            isSelectable={true}
-                            onSelect={() => onSelectStream(stream.id)}
-                            metadata={{
-                                description: stream.description
-                            }}
-                        />
-                    ))}
+                    {platform.streams.map(stream => {
+                        // Build destination ID in "platform:stream" format (e.g., "youtube:main")
+                        const destinationId = `${platform.id}:${stream.id}`;
+
+                        return (
+                            <NestedCard
+                                key={stream.id}
+                                title={`${getPlatformIcon(platform.id || '')} ${stream.name}`}
+                                level={3}
+                                isSelected={selectedStreamId === destinationId}
+                                isSelectable={true}
+                                onSelect={() => onSelectStream(destination Id)}
+                                metadata={{
+                                    description: stream.description
+                                }}
+                            />
+                        );
+                    })}
                 </React.Fragment>
             ))}
         </NestedCard>
