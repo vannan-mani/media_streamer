@@ -11,6 +11,8 @@ import json
 import logging
 from typing import Optional
 
+import psutil
+
 from shared.config_manager import ConfigManager
 from shared.logger import setup_logger
 
@@ -160,18 +162,24 @@ def get_hierarchical_options():
 # Health check
 @app.get("/api/health")
 def health_check():
-    import psutil
-    
     mem = psutil.virtual_memory()
-    freq = psutil.cpu_freq()
+    
+    # Get temperature (if available)
+    temp = 0
+    try:
+        temps = psutil.sensors_temperatures()
+        if temps and 'coretemp' in temps:
+            temp = int(temps['coretemp'][0].current)
+    except:
+        pass
     
     return {
         "status": "healthy",
         "service": "sentinel-api",
         "version": "2.0.0",
-        "cpu": psutil.cpu_percent(interval=None),
+        "cpu": round(psutil.cpu_percent(interval=0.1), 1),
         "gpu": 0, # Placeholder until nvidia-smi integration
-        "temperature": 45, # Placeholder
+        "temperature": temp,
         "memory": {
             "used": mem.used,
             "total": mem.total,
