@@ -5,6 +5,7 @@ Manages GStreamer pipelines for encoding UDP multicast to RTMP destinations
 import os
 import signal
 import subprocess
+import tempfile
 import threading
 from typing import Optional, Dict
 import sys
@@ -94,18 +95,16 @@ class RTMPPipelineManager:
             except:
                 logger.info("Starting RTMP stream")
             
-            # Use shell=True because pipeline_str contains complex quoted arguments
-            # Redirect stderr to a log file since shell=True prevents direct stderr pipe access
-            import tempfile
-            stderr_log = os.path.join(tempfile.gettempdir(), f"gst_stderr_{os.getpid()}.log")
+            # Redirect stdout+stderr to log file (progressreport outputs to stdout)
+            stderr_log = os.path.join(tempfile.gettempdir(), f"gst_output_{os.getpid()}.log")
             
-            logger.info(f"GStreamer stderr will be logged to: {stderr_log}")
+            logger.info(f"GStreamer output will be logged to: {stderr_log}")
             
             # Write command to a shell script to avoid quote escaping hell
             script_file = os.path.join(tempfile.gettempdir(), f"gst_run_{os.getpid()}.sh")
             with open(script_file, 'w') as f:
                 f.write("#!/bin/bash\n")
-                f.write(f"exec gst-launch-1.0 {pipeline_str} 2>{stderr_log}\n")
+                f.write(f"exec gst-launch-1.0 {pipeline_str} &>{stderr_log}\n")
             
             os.chmod(script_file, 0o755)
             
