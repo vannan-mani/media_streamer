@@ -1,0 +1,16 @@
+[Unit]
+Description=Sentinel Uplink Service (RTMP Encoding)
+After=network.target sentinel-input.service
+
+[Service]
+Type=simple
+User=seithigal-youtube
+WorkingDirectory=/home/seithigal-youtube/media_stream/backend
+ExecStart=/usr/bin/python3 services/uplink/main.py
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
