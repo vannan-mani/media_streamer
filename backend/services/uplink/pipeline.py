@@ -149,22 +149,38 @@ class RTMPPipelineManager:
         start_time = time.time()
         byte_count = 0
         last_byte_update = time.time()
+        line_count = 0
+        
+        logger.info("Entering stderr read loop...")
         
         try:
             # We need to make sure GStreamer outputs stats to stderr
             # identity silent=false outputs to stderr
             for line in iter(process.stderr.readline, ''):
                 if not line:
+                    logger.warning("Received empty line, breaking")
                     break
+                
+                line_count += 1
+                
+                # Log every 100 lines to show activity
+                if line_count % 100 == 0:
+                    logger.info(f"Read {line_count} lines from stderr")
+                
+                # Log first few lines to verify output
+                if line_count <= 5:
+                    logger.debug(f"stderr line {line_count}: {line[:100]}")
                 
                 # Parse identity stats for frame counts and bytes
                 # identity format: /GstPipeline:pipeline0/GstIdentity:video_stats: chain******* (num_bytes bytes, ...)
                 if 'video_stats' in line and 'chain' in line:
+                    logger.debug(f"Found video_stats line")
                     size_match = re.search(r'\((\d+)\s+bytes', line)
                     if size_match:
                         size = int(size_match.group(1))
                         byte_count += size
                         stats['frames_processed'] += 1
+                        logger.debug(f"Parsed frame: size={size}, total_frames={stats['frames_processed']}")
                 
                 # Parse FPS from fpsdisplaysink (if it logs)
                 # rendered: 12, dropped: 0, current-fps: 30.00, average-fps: 30.00
@@ -173,6 +189,7 @@ class RTMPPipelineManager:
                     fps_match = re.search(r'current-fps:\s*([\d.]+)', line)
                 
                 if fps_match:
+                    logger.debug(f"Found FPS line")
                     if len(fps_match.groups()) >= 3:
                         stats['frames_processed'] = int(fps_match.group(1))
                         stats['frames_dropped'] = int(fps_match.group(2))
@@ -196,11 +213,13 @@ class RTMPPipelineManager:
                         stats['fps'] = round(stats['frames_processed'] / stats['stream_duration'], 1)
 
                     # Write stats
+                    logger.info(f"Writing stats: FPS={stats['fps']}, Bitrate={stats['bitrate']}kbps, Frames={stats['frames_processed']}")
                     stats_mgr.write('stream_stats.json', stats)
-                    logger.debug(f"Stats: FPS={stats['fps']}, Bitrate={stats['bitrate']}kbps, Frames={stats['frames_processed']}")
                     
         except Exception as e:
-            logger.error(f"Stats monitoring error: {e}")
+            logger.error(f"Stats monitoring error: {e}", exc_info=True)
+        
+        logger.warning(f"Stats monitoring thread exiting. Read {line_count} lines total.")
 
 
     def stop(self, pid: int) -> bool:
