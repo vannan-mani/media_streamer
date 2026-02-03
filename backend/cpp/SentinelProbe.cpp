@@ -95,8 +95,8 @@ void processDevice(IDeckLink* deckLink, int index, bool isLast) {
 
         // Signal Lock
         bool hasSignal = false;
-        if (deckLinkStatus->getFlag(bmdDeckLinkStatusVideoInputSignalLocked, &boolVal) == S_OK)
-            hasSignal = (boolVal == TRUE);
+        if (deckLinkStatus->GetFlag(bmdDeckLinkStatusVideoInputSignalLocked, &boolVal) == S_OK)
+            hasSignal = (boolVal == true);
         
         std::cout << "    \"inputs\": [{" << std::endl;
         std::cout << "      \"id\": \"input_" << index << "\"," << std::endl;
