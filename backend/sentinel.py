@@ -6,7 +6,6 @@ import os
 from typing import Dict, List, Optional
 from decklink_manager import DeckLinkManager
 from gstreamer_manager import GStreamerManager
-import config
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +31,9 @@ class StreamSentinel:
         # Default Configuration (3-tier: input + destination + preset)
         self.configuration = {
             "selected_device_id": 0,
-            "selected_input_id": None,  # Hardware input ID (e.g., "input_0")
-            "selected_destination_id": None,  # YouTube stream ID (e.g., "youtube:main")
-            "selected_preset_id": config.PRESETS_FLAT[0]['id']
+            "selected_input_id": None,
+            "selected_destination_id": None,
+            "selected_preset_id": "hd_med"  # Default to HD Medium
         }
         
         self.intent = self._load_intent_and_config()
@@ -195,7 +194,7 @@ class StreamSentinel:
             
         platform_id, stream_id = destination_id.split(':', 1)
         
-        # 3. Lookup destination and preset
+        # 3. Lookup destination
         platform_config = stream_config.get('destinations', {}).get(platform_id)
         if not platform_config:
             self._update_system_status(f"Error: Platform {platform_id} not found")
@@ -203,14 +202,37 @@ class StreamSentinel:
             return
         
         stream = next((s for s in platform_config.get('streams', []) if s['id'] == stream_id), None)
-        preset = next((p for p in config.PRESETS_FLAT if p['id'] == preset_id), None)
-        
-        if not stream or not preset:
-            self._update_system_status("Error: Invalid Config")
-            logger.error(f"Invalid Config: Stream={stream_id}, Preset={preset_id}")
+        if not stream:
+            self._update_system_status(f"Error: Stream {stream_id} not found")
+            logger.error(f"Stream not found: {stream_id}")
             return
         
-        # 4. Build RTMP URL
+        # 4. Load and lookup encoding preset from JSON
+        presets_path = os.path.join(os.path.dirname(__file__), 'encoding_presets.json')
+        try:
+            with open(presets_path, 'r') as f:
+                presets_config = json.load(f)
+        except FileNotFoundError:
+            self._update_system_status("Error: encoding_presets.json not found")
+            logger.error("encoding_presets.json not found")
+            return
+        
+        # Flatten presets to find by ID
+        preset = None
+        for quality_data in presets_config.get('presets', {}).values():
+            for variant in quality_data.get('variants', []):
+                if variant['id'] == preset_id:
+                    preset = variant
+                    break
+            if preset:
+                break
+        
+        if not preset:
+            self._update_system_status(f"Error: Preset {preset_id} not found")
+            logger.error(f"Preset not found: {preset_id}")
+            return
+        
+        # 5. Build RTMP URL
         rtmp_base = platform_config.get('rtmp_url', '')
         rtmp_url = f"{rtmp_base}/{stream['key']}"
 
@@ -238,30 +260,16 @@ class StreamSentinel:
 
     # --- Persistence ---
     def _load_intent_and_config(self) -> str:
+        """Load persisted intent and configuration from disk"""
         try:
             if os.path.exists(self.intent_file):
                 with open(self.intent_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     val = data.get('intent', 'DISABLED')
                     
-                    # Also load configuration override if exists
+                    # Load configuration if exists (only new 3-tier format supported)
                     if 'configuration' in data:
-                        cfg = data['configuration']
-                        
-                        # MIGRATION: Convert old selected_channel_id to new selected_destination_id
-                        if 'selected_channel_id' in cfg and not cfg.get('selected_destination_id'):
-                            old_channel_id = cfg['selected_channel_id']
-                            # Assume it's a YouTube stream ID (old format was just "main", "backup", etc.)
-                            cfg['selected_destination_id'] = f"youtube:{old_channel_id}"
-                            logger.info(f"Migrated old channel_id '{old_channel_id}' to destination_id '{cfg['selected_destination_id']}'")
-                        
-                        # Ensure new fields exist with defaults
-                        if 'selected_input_id' not in cfg:
-                            cfg['selected_input_id'] = None
-                        if 'selected_destination_id' not in cfg:
-                            cfg['selected_destination_id'] = "youtube:main"
-                        
-                        self.configuration.update(cfg)
+                        self.configuration.update(data['configuration'])
                         
                     logger.info(f"Sentinel: Loaded intent '{val}' from disk")
                     return val

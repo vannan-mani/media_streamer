@@ -8,7 +8,6 @@ import os
 import random
 import logging
 import json
-import config
 from typing import Dict, List, Optional
 
 # Standard logging setup
@@ -91,12 +90,6 @@ class StreamStartRequest(BaseModel):
 
 class SentinelIntentRequest(BaseModel):
     action: str # AUTO_STREAM, DISABLED
-
-class SentinelConfigRequest(BaseModel):
-    selected_device_id: int
-    selected_input_id: Optional[str] = None
-    selected_destination_id: Optional[str] = None  # Format: "youtube:main"
-    selected_preset_id: str
 
 class SentinelStateResponse(BaseModel):
     intent: str
@@ -202,21 +195,7 @@ def get_sentinel_state():
         settings=state.get('configuration', {}) # Mapped to configuration in UI
     )
 
-@app.get("/api/sentinel/options")
-def get_sentinel_options():
-    """Get available Channels and Presets (flat structure for backward compatibility)"""
-    return {
-        "channels": config.CHANNELS,
-        "presets": config.PRESETS_FLAT
-    }
 
-@app.get("/api/sentinel/options/nested")
-def get_sentinel_options_nested():
-    """Get hierarchical Endpoints and Presets for nested UI"""
-    return {
-        "endpoints": config.ENDPOINTS,
-        "presets": config.PRESETS
-    }
 
 @app.get("/api/sentinel/options/hierarchical")
 def get_sentinel_options_hierarchical():
@@ -288,10 +267,18 @@ def get_sentinel_options_hierarchical():
         }]
     }
     
+    # Load encoding presets from JSON
+    presets_path = os.path.join(os.path.dirname(__file__), 'encoding_presets.json')
+    try:
+        with open(presets_path, 'r') as f:
+            presets_config = json.load(f)
+    except FileNotFoundError:
+        presets_config = {"presets": {}}
+    
     return {
         "inputs": inputs,
-        "destinations": stream_config['destinations'],
-        "presets": stream_config['presets']
+        "destinations": stream_config.get('destinations', {}),
+        "presets": presets_config.get('presets', {})
     }
 
 

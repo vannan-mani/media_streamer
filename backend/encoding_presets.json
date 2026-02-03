@@ -1,0 +1,70 @@
+{
+    "presets": {
+        "hd": {
+            "name": "HD (1080p)",
+            "resolution": "1920x1080",
+            "variants": [
+                {
+                    "id": "hd_high",
+                    "name": "High",
+                    "bitrate": 6000,
+                    "fps": 60,
+                    "width": 1920,
+                    "height": 1080,
+                    "description": "6000 kbps, 60fps"
+                },
+                {
+                    "id": "hd_med",
+                    "name": "Medium",
+                    "bitrate": 4500,
+                    "fps": 60,
+                    "width": 1920,
+                    "height": 1080,
+                    "description": "4500 kbps, 60fps"
+                },
+                {
+                    "id": "hd_low",
+                    "name": "Low",
+                    "bitrate": 3000,
+                    "fps": 30,
+                    "width": 1920,
+                    "height": 1080,
+                    "description": "3000 kbps, 30fps"
+                }
+            ]
+        },
+        "sd": {
+            "name": "SD (480p)",
+            "resolution": "720x480",
+            "variants": [
+                {
+                    "id": "sd_high",
+                    "name": "High",
+                    "bitrate": 2500,
+                    "fps": 30,
+                    "width": 720,
+                    "height": 480,
+                    "description": "2500 kbps, 30fps"
+                },
+                {
+                    "id": "sd_med",
+                    "name": "Medium",
+                    "bitrate": 1800,
+                    "fps": 30,
+                    "width": 720,
+                    "height": 480,
+                    "description": "1800 kbps, 30fps"
+                },
+                {
+                    "id": "sd_low",
+                    "name": "Low",
+                    "bitrate": 1200,
+                    "fps": 30,
+                    "width": 720,
+                    "height": 480,
+                    "description": "1200 kbps, 30fps"
+                }
+            ]
+        }
+    }
+}
