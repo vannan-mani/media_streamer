@@ -275,9 +275,17 @@ def get_sentinel_options_hierarchical():
     except FileNotFoundError:
         presets_config = {"presets": {}}
     
+    # Transform destinations to include platform ID
+    destinations_with_id = {}
+    for platform_id, platform_data in stream_config.get('destinations', {}).items():
+        destinations_with_id[platform_id] = {
+            "id": platform_id,  # Add the ID field
+            **platform_data
+        }
+    
     return {
         "inputs": inputs,
-        "destinations": stream_config.get('destinations', {}),
+        "destinations": destinations_with_id,
         "presets": presets_config.get('presets', {})
     }
 
