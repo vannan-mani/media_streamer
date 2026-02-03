@@ -84,15 +84,20 @@ class RTMPPipelineManager:
                 multicast_ip, video_port, audio_port, rtmp_url, preset
             )
             
-            cmd = f"gst-launch-1.0 {pipeline_str}"
             logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
             
+            # Use shell=False for better signal management
+            # We need to export GST_DEBUG to see identity output in stderr
+            env = os.environ.copy()
+            env["GST_DEBUG"] = "identity:3,fpsdisplaysink:3"
+            
             process = subprocess.Popen(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
+                ['gst-launch-1.0'] + pipeline_str.split(),
+                stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
-                universal_newlines=True
+                universal_newlines=True,
+                env=env,
+                preexec_fn=os.setsid if os.name != 'nt' else None
             )
             
             self.active_pipelines[process.pid] = process
@@ -125,11 +130,12 @@ class RTMPPipelineManager:
     def _monitor_pipeline_stats(self, process):
         """Monitor GStreamer pipeline stderr for statistics"""
         import re
-        import json
         import time
-        from pathlib import Path
+        from shared.config_manager import ConfigManager
         
-        stats_file = Path(__file__).parent.parent.parent / 'data' / 'stream_stats.json'
+        # Use shared config manager to write stats
+        stats_mgr = ConfigManager()
+        
         stats = {
             'fps': 0.0,
             'bitrate': 0,
@@ -140,36 +146,57 @@ class RTMPPipelineManager:
         }
         
         start_time = time.time()
-        frame_count = 0
+        byte_count = 0
+        last_byte_update = time.time()
         
         try:
+            # We need to make sure GStreamer outputs stats to stderr
+            # identity silent=false outputs to stderr
             for line in iter(process.stderr.readline, ''):
                 if not line:
                     break
                 
-                # Parse identity stats for frame counts
-                if 'chain' in line and 'video_stats' in line:
-                    frame_count += 1
-                    stats['frames_processed'] = frame_count
+                # Parse identity stats for frame counts and bytes
+                # identity format: /GstPipeline:pipeline0/GstIdentity:video_stats: chain******* (num_bytes bytes, ...)
+                if 'video_stats' in line and 'chain' in line:
+                    size_match = re.search(r'\((\d+)\s+bytes', line)
+                    if size_match:
+                        size = int(size_match.group(1))
+                        byte_count += size
+                        stats['frames_processed'] += 1
                 
-                # Parse FPS from fpsdisplaysink
+                # Parse FPS from fpsdisplaysink (if it logs)
+                # rendered: 12, dropped: 0, current-fps: 30.00, average-fps: 30.00
                 fps_match = re.search(r'rendered:\s*(\d+),\s*dropped:\s*(\d+),\s*fps:\s*([\d.]+)', line)
+                if not fps_match:
+                    fps_match = re.search(r'current-fps:\s*([\d.]+)', line)
+                
                 if fps_match:
-                    stats['frames_processed'] = int(fps_match.group(1))
-                    stats['frames_dropped'] = int(fps_match.group(2))
-                    stats['fps'] = float(fps_match.group(3))
+                    if len(fps_match.groups()) >= 3:
+                        stats['frames_processed'] = int(fps_match.group(1))
+                        stats['frames_dropped'] = int(fps_match.group(2))
+                        stats['fps'] = float(fps_match.group(3))
+                    else:
+                        stats['fps'] = float(fps_match.group(1))
                 
                 # Update duration
-                stats['stream_duration'] = int(time.time() - start_time)
-                stats['last_update'] = time.time()
+                current_time = time.time()
+                stats['stream_duration'] = int(current_time - start_time)
+                stats['last_update'] = current_time
                 
-                # Calculate approximate bitrate (from target, as actual requires tee + filesink analysis)
-                stats['bitrate'] = int(stats['fps'] * 1920 * 1080 * 0.1 / 1000) if stats['fps'] > 0 else 0
-                
-                # Write stats every second
-                if time.time() % 1 < 0.1:
-                    with open(stats_file, 'w') as f:
-                        json.dump(stats, f)
+                # Calculate actual bitrate every second
+                if current_time - last_byte_update >= 1.0:
+                    stats['bitrate'] = int((byte_count * 8) / (current_time - last_byte_update) / 1024)  # kbps
+                    byte_count = 0
+                    last_byte_update = current_time
+                    
+                    # Also update FPS if not getting it from fpsdisplaysink
+                    if stats['fps'] == 0 and stats['stream_duration'] > 0:
+                        stats['fps'] = round(stats['frames_processed'] / stats['stream_duration'], 1)
+
+                    # Write stats
+                    stats_mgr.write('stream_stats.json', stats)
+                    
         except Exception as e:
             logger.error(f"Stats monitoring error: {e}")
 
