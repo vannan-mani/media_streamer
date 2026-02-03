@@ -31,12 +31,10 @@ udpsrc multicast-group=${MULTICAST_IP} port=${VIDEO_PORT} multicast-iface=\"lo\"
 rtp. ! rtpvrawdepay ! videoconvert \
 ! videoscale ! video/x-raw,width=${WIDTH},height=${HEIGHT} \
 ! identity name=video_stats silent=false \
-! queue max-size-buffers=3 leaky=downstream \
-! x264enc bitrate=${BITRATE} speed-preset=veryfast tune=zerolatency key-int-max=$((FPS*2)) \
-! video/x-h264,profile=high \
-! h264parse \
-! fpsdisplaysink name=fps_monitor text-overlay=false signal-fps-measurements=true sync=false \
-fps_monitor. ! queue name=v_enc \
+! tee name=t \
+t. ! queue max-size-buffers=3 leaky=downstream ! x264enc bitrate=${BITRATE} speed-preset=veryfast tune=zerolatency key-int-max=$((FPS*2)) \
+   ! video/x-h264,profile=high ! h264parse ! queue name=v_enc \
+t. ! queue max-size-buffers=3 leaky=downstream ! fpsdisplaysink name=fps_monitor text-overlay=false signal-fps-measurements=true sync=false \
 udpsrc multicast-group=${MULTICAST_IP} port=${AUDIO_PORT} multicast-iface=\"lo\" caps=\"application/x-rtp\" \
 ! rtp.recv_rtp_sink_1 \
 rtp. ! rtpL16depay ! audioconvert ! audioresample \
