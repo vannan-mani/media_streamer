@@ -92,6 +92,12 @@ class StreamStartRequest(BaseModel):
 class SentinelIntentRequest(BaseModel):
     action: str # AUTO_STREAM, DISABLED
 
+class SentinelConfigRequest(BaseModel):
+    selected_device_id: int
+    selected_input_id: Optional[str] = None
+    selected_destination_id: Optional[str] = None  # Format: "youtube:main"
+    selected_preset_id: str
+
 class SentinelStateResponse(BaseModel):
     intent: str
     system_status: str
@@ -291,7 +297,8 @@ def get_sentinel_options_hierarchical():
 
 class SentinelConfigRequest(BaseModel):
     selected_device_id: int
-    selected_channel_id: str
+    selected_input_id: Optional[str] = None
+    selected_destination_id: Optional[str] = None
     selected_preset_id: str
 
 @app.post("/api/sentinel/config")
@@ -302,7 +309,8 @@ def update_sentinel_config(req: SentinelConfigRequest):
     
     sentinel_service.update_configuration({
         "selected_device_id": req.selected_device_id,
-        "selected_channel_id": req.selected_channel_id,
+        "selected_input_id": req.selected_input_id,
+        "selected_destination_id": req.selected_destination_id,
         "selected_preset_id": req.selected_preset_id
     })
     return {"status": "success"}

@@ -29,10 +29,11 @@ class StreamSentinel:
         # { "0": { "info": {...}, "status": "IDLE" | "STREAMING" } }
         self.hardware_registry = {}
         
-        # Default Configuration
+        # Default Configuration (3-tier: input + destination + preset)
         self.configuration = {
             "selected_device_id": 0,
-            "selected_channel_id": config.CHANNELS[0]['id'],
+            "selected_input_id": None,  # Hardware input ID (e.g., "input_0")
+            "selected_destination_id": None,  # YouTube stream ID (e.g., "youtube:main")
             "selected_preset_id": config.PRESETS_FLAT[0]['id']
         }
         
@@ -115,7 +116,8 @@ class StreamSentinel:
             intent = self.state['intent']
             selected_dev_id = self.state['configuration']['selected_device_id']
             selected_preset_id = self.state['configuration']['selected_preset_id']
-            selected_channel_id = self.state['configuration']['selected_channel_id']
+            selected_input_id = self.state['configuration'].get('selected_input_id')
+            selected_dest_id = self.state['configuration'].get('selected_destination_id')
             
         is_streaming = self.gstreamer.is_running()
         
@@ -123,7 +125,7 @@ class StreamSentinel:
             if not is_streaming:
                 # Scenario: Auto-Start Check
                 if self._is_selected_device_ready(selected_dev_id):
-                     self._launch_stream(selected_dev_id, selected_channel_id, selected_preset_id)
+                     self._launch_stream(selected_dev_id, selected_input_id, selected_dest_id, selected_preset_id)
                 else:
                     self._update_system_status(f"Waiting for Signal on Device {selected_dev_id}...")
             else:
@@ -172,25 +174,53 @@ class StreamSentinel:
         # For simplicity V1: If GStreamer stops running due to error, we detect is_streaming=False next loop.
         return False # Handled by Manager Stopping itself on error
 
-    def _launch_stream(self, device_num, channel_id, preset_id):
+    def _launch_stream(self, device_num, input_id, destination_id, preset_id):
         """Launch the GStreamer pipeline with Configured Options"""
         
-        # 1. Lookup Configs
-        channel = next((c for c in config.CHANNELS if c['id'] == channel_id), None)
+        # 1. Load stream config
+        config_path = os.path.join(os.path.dirname(__file__), 'stream_config.json')
+        try:
+            with open(config_path, 'r') as f:
+                stream_config = json.load(f)
+        except FileNotFoundError:
+            self._update_system_status("Error: stream_config.json not found")
+            logger.error("stream_config.json not found")
+            return
+        
+        # 2. Parse destination_id (format: "youtube:main")
+        if not destination_id or ':' not in destination_id:
+            self._update_system_status("Error: Invalid Destination")
+            logger.error(f"Invalid destination_id: {destination_id}")
+            return
+            
+        platform_id, stream_id = destination_id.split(':', 1)
+        
+        # 3. Lookup destination and preset
+        platform_config = stream_config.get('destinations', {}).get(platform_id)
+        if not platform_config:
+            self._update_system_status(f"Error: Platform {platform_id} not found")
+            logger.error(f"Platform not found: {platform_id}")
+            return
+        
+        stream = next((s for s in platform_config.get('streams', []) if s['id'] == stream_id), None)
         preset = next((p for p in config.PRESETS_FLAT if p['id'] == preset_id), None)
         
-        if not channel or not preset:
+        if not stream or not preset:
             self._update_system_status("Error: Invalid Config")
-            logger.error(f"Invalid Config: Channel={channel_id}, Preset={preset_id}")
+            logger.error(f"Invalid Config: Stream={stream_id}, Preset={preset_id}")
             return
+        
+        # 4. Build RTMP URL
+        rtmp_base = platform_config.get('rtmp_url', '')
+        rtmp_url = f"{rtmp_base}/{stream['key']}"
 
         try:
             self._update_system_status(f"Starting {preset['name']} Stream...")
-            logger.info(f"Sentinel: Launching {preset['name']} to {channel['name']}")
+            logger.info(f"Sentinel: Launching {preset['name']} to {platform_config['name']} ({stream['name']})")
             
             self.gstreamer.build_pipeline(
                  decklink_device=device_num,
-                 youtube_rtmps_url=channel['url'],
+                 youtube_rtmps_url=rtmp_url,
                  resolution=f"{preset['width']}x{preset['height']}",
                  fps=preset['fps'],
                  bitrate=preset['bitrate']
