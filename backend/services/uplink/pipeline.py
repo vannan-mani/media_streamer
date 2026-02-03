@@ -139,7 +139,7 @@ class RTMPPipelineManager:
             # Start statistics monitoring thread
             stats_thread = threading.Thread(
                 target=self._monitor_pipeline_stats,
-                args=(stderr_log,),  # Pass log file path instead of process
+                args=(stderr_log, src_fps, bitrate),
                 daemon=True
             )
             stats_thread.start()
@@ -161,7 +161,7 @@ class RTMPPipelineManager:
             del self.active_pipelines[pid]
         return False
     
-    def _monitor_pipeline_stats(self, stderr_log_path):
+    def _monitor_pipeline_stats(self, stderr_log_path, src_fps=30, bitrate=4500):
         """Monitor GStreamer pipeline stderr from log file"""
         import re
         import time

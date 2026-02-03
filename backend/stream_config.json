@@ -10,6 +10,12 @@
                     "name": "Seithigal Live Stream",
                     "key": "vp7t-pgj0-xak0-ar5t-1w7u",
                     "description": "Primary YouTube Live stream"
+                },
+                {
+                    "id": "backup",
+                    "name": "Seithigal HQ 2",
+                    "key": "mad5-eeqs-ze9f-baqu-81vk",
+                    "description": "Secondary YouTube High Quality stream"
                 }
             ]
         },
