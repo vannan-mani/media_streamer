@@ -118,11 +118,18 @@ class UplinkService:
             rtmp_base = platform.get('rtmp_url', '')
             rtmp_url = f"{rtmp_base}/{stream['key']}"
             
-            # Check if already streaming
+            # Check if already streaming (and ensure it's alive)
             stream_key = f"{input_id}:{dest_id}"
             if stream_key in self.active_streams:
-                logger.debug(f"Stream {stream_key} already active")
-                return
+                stream_info = self.active_streams[stream_key]
+                pid = stream_info['pid']
+                
+                if self.pipeline_manager.is_alive(pid):
+                    logger.debug(f"Stream {stream_key} is healthy (PID {pid})")
+                    return
+                else:
+                    logger.warning(f"Stream {stream_key} (PID {pid}) died unexpectedly. Cleanup and restart.")
+                    del self.active_streams[stream_key]
             
             # Start RTMP pipeline
             logger.info(f"Starting stream: {input_id} → {dest_id} ({preset['name']})")

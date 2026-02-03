@@ -98,6 +98,16 @@ class RTMPPipelineManager:
             logger.error(f"Failed to start pipeline: {e}")
             return None
     
+    def is_alive(self, pid: int) -> bool:
+        """Check if pipeline process is still running"""
+        if pid in self.active_pipelines:
+            process = self.active_pipelines[pid]
+            if process.poll() is None:
+                return True
+            # Clean up dead process
+            del self.active_pipelines[pid]
+        return False
+
     def stop(self, pid: int) -> bool:
         """Stop a running pipeline by PID"""
         try:
