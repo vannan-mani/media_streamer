@@ -98,20 +98,22 @@ class RTMPPipelineManager:
             
             logger.info(f"GStreamer stderr will be logged to: {stderr_log}")
             
-            # Set GST_DEBUG as environment variable
-            env = os.environ.copy()
-            env["GST_DEBUG"] = "identity:6"
-            env["GST_DEBUG_NO_COLOR"] = "1"  # Easier parsing
+            # Write command to a shell script to avoid quote escaping hell
+            script_file = os.path.join(tempfile.gettempdir(), f"gst_run_{os.getpid()}.sh")
+            with open(script_file, 'w') as f:
+                f.write("#!/bin/bash\n")
+                f.write(f"export GST_DEBUG=identity:6\n")
+                f.write(f"export GST_DEBUG_NO_COLOR=1\n")
+                f.write(f"exec gst-launch-1.0 {pipeline_str} 2>{stderr_log}\n")
             
-            # CRITICAL: Wrap in bash -c so 2> redirect applies to gst-launch, not the outer shell
-            cmd = f'bash -c "gst-launch-1.0 {pipeline_str} 2>{stderr_log}"'
+            os.chmod(script_file, 0o755)
+            
+            logger.info(f"Executing script: {script_file}")
             
             process = subprocess.Popen(
-                cmd,
-                shell=True,
+                [script_file],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                env=env,  # Pass environment with GST_DEBUG
                 preexec_fn=os.setsid if os.name != 'nt' else None
             )
             
