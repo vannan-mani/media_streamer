@@ -98,14 +98,20 @@ class RTMPPipelineManager:
             
             logger.info(f"GStreamer stderr will be logged to: {stderr_log}")
             
-            # Set GST_DEBUG and redirect stderr to file
-            cmd = f"GST_DEBUG=identity:6 gst-launch-1.0 {pipeline_str} 2>{stderr_log}"
+            # Set GST_DEBUG as environment variable (doesn't work in shell command string)
+            env = os.environ.copy()
+            env["GST_DEBUG"] = "identity:6"
+            env["GST_DEBUG_NO_COLOR"] = "1"  # Easier parsing
+            
+            # Redirect stderr to file
+            cmd = f"gst-launch-1.0 {pipeline_str} 2>{stderr_log}"
             
             process = subprocess.Popen(
                 cmd,
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,  # Redirected to file instead
+                env=env,  # Pass environment with GST_DEBUG
                 preexec_fn=os.setsid if os.name != 'nt' else None
             )
             
