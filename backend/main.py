@@ -161,7 +161,7 @@ def get_hierarchical_options():
 
 @app.get("/api/stream/telemetry")
 def get_stream_telemetry():
-    """Get real-time streaming statistics"""
+    """Get real-time streaming statistics from active pipeline"""
     intent_data = config.read('intent.json', {})
     
     # Check if actively streaming
@@ -177,31 +177,42 @@ def get_stream_telemetry():
             "keyframe_interval": "N/A"
         }
     
-    # Get selected preset for target bitrate/fps
+    # Read actual statistics from uplink pipeline
+    stats = config.read('stream_stats.json', {
+        'fps': 0.0,
+        'bitrate': 0,
+        'frames_processed': 0,
+        'frames_dropped': 0,
+        'stream_duration': 0
+    })
+    
+    # Determine network health based on actual performance
+    network_health = "excellent"
+    if stats.get('frames_dropped', 0) > 100:
+        network_health = "poor"
+    elif stats.get('frames_dropped', 0) > 10:
+        network_health = "fair"
+    
+    # Get selected preset for keyframe interval calculation
     configuration = intent_data.get('configuration', {})
     preset_id = configuration.get('selected_preset_id', 'hd_high')
     
     presets_config = load_encoding_presets()
-    target_preset = None
+    target_fps = 60
     for quality_group in presets_config.get('presets', {}).values():
         for variant in quality_group.get('variants', []):
             if variant['id'] == preset_id:
-                target_preset = variant
+                target_fps = variant.get('fps', 60)
                 break
     
-    target_bitrate = target_preset.get('bitrate', 6000) if target_preset else 6000
-    target_fps = target_preset.get('fps', 60) if target_preset else 60
-    
-    # TODO: Parse actual GStreamer statistics from uplink pipeline
-    # For now, return target values to show stream is active
     return {
-        "bitrate": target_bitrate,
-        "fps": target_fps,
-        "dropped_frames": 0,
-        "processed_frames": 1000,  # Placeholder
-        "encoding_load": psutil.cpu_percent(interval=None),
-        "network_health": "excellent",
-        "stream_duration": 120,  # Placeholder
+        "bitrate": stats.get('bitrate', 0),
+        "fps": round(stats.get('fps', 0), 1),
+        "dropped_frames": stats.get('frames_dropped', 0),
+        "processed_frames": stats.get('frames_processed', 0),
+        "encoding_load": round(psutil.cpu_percent(interval=None), 1),
+        "network_health": network_health,
+        "stream_duration": stats.get('stream_duration', 0),
         "keyframe_interval": f"{target_fps * 2} frames"
     }
 

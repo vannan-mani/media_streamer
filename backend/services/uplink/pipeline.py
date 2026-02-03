@@ -48,14 +48,19 @@ class RTMPPipelineManager:
         ! rtp.recv_rtp_sink_0
         rtp. ! rtpvrawdepay ! videoconvert 
         ! videoscale ! video/x-raw,width={width},height={height}
+        ! identity name=video_stats silent=false
         ! queue max-size-buffers=3 leaky=downstream
         ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
         ! video/x-h264,profile=high
-        ! h264parse ! queue name=v_enc
+        ! h264parse 
+        ! fpsdisplaysink name=fps_monitor text-overlay=false signal-fps-measurements=true sync=false
+        fps_monitor. ! queue name=v_enc
         
         udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo" caps="application/x-rtp"
         ! rtp.recv_rtp_sink_1
-        rtp. ! rtpL16depay ! audioconvert ! audioresample ! queue max-size-buffers=3 leaky=downstream
+        rtp. ! rtpL16depay ! audioconvert ! audioresample 
+        ! identity name=audio_stats silent=false
+        ! queue max-size-buffers=3 leaky=downstream
         ! avenc_aac bitrate=128000
         ! aacparse ! queue name=a_enc
         
@@ -83,24 +88,25 @@ class RTMPPipelineManager:
             logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
             
             process = subprocess.Popen(
-                ['gst-launch-1.0'] + pipeline_str.split(),
-                stdout=subprocess.DEVNULL,
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=os.setsid if os.name != 'nt' else None
+                universal_newlines=True
             )
             
-            # Give it a moment to start
-            import time
-            time.sleep(0.5)
+            self.active_pipelines[process.pid] = process
             
-            if process.poll() is None:
-                self.active_pipelines[process.pid] = process
-                logger.info(f"RTMP pipeline started with PID {process.pid}")
-                return process.pid
-            else:
-                stderr = process.stderr.read() if process.stderr else b''
-                logger.error(f"Pipeline failed to start: {stderr.decode()}")
-                return None
+            # Start statistics monitoring thread
+            stats_thread = threading.Thread(
+                target=self._monitor_pipeline_stats,
+                args=(process,),
+                daemon=True
+            )
+            stats_thread.start()
+            
+            logger.info(f"RTMP pipeline started with PID {process.pid}")
+            return process.pid
                 
         except Exception as e:
             logger.error(f"Failed to start pipeline: {e}")
@@ -115,6 +121,58 @@ class RTMPPipelineManager:
             # Clean up dead process
             del self.active_pipelines[pid]
         return False
+    
+    def _monitor_pipeline_stats(self, process):
+        """Monitor GStreamer pipeline stderr for statistics"""
+        import re
+        import json
+        import time
+        from pathlib import Path
+        
+        stats_file = Path(__file__).parent.parent.parent / 'data' / 'stream_stats.json'
+        stats = {
+            'fps': 0.0,
+            'bitrate': 0,
+            'frames_processed': 0,
+            'frames_dropped': 0,
+            'stream_duration': 0,
+            'last_update': time.time()
+        }
+        
+        start_time = time.time()
+        frame_count = 0
+        
+        try:
+            for line in iter(process.stderr.readline, ''):
+                if not line:
+                    break
+                
+                # Parse identity stats for frame counts
+                if 'chain' in line and 'video_stats' in line:
+                    frame_count += 1
+                    stats['frames_processed'] = frame_count
+                
+                # Parse FPS from fpsdisplaysink
+                fps_match = re.search(r'rendered:\s*(\d+),\s*dropped:\s*(\d+),\s*fps:\s*([\d.]+)', line)
+                if fps_match:
+                    stats['frames_processed'] = int(fps_match.group(1))
+                    stats['frames_dropped'] = int(fps_match.group(2))
+                    stats['fps'] = float(fps_match.group(3))
+                
+                # Update duration
+                stats['stream_duration'] = int(time.time() - start_time)
+                stats['last_update'] = time.time()
+                
+                # Calculate approximate bitrate (from target, as actual requires tee + filesink analysis)
+                stats['bitrate'] = int(stats['fps'] * 1920 * 1080 * 0.1 / 1000) if stats['fps'] > 0 else 0
+                
+                # Write stats every second
+                if time.time() % 1 < 0.1:
+                    with open(stats_file, 'w') as f:
+                        json.dump(stats, f)
+        except Exception as e:
+            logger.error(f"Stats monitoring error: {e}")
+
 
     def stop(self, pid: int) -> bool:
         """Stop a running pipeline by PID"""
