@@ -1,6 +1,3 @@
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst
 from typing import List, Dict, Optional
 import time
 import logging

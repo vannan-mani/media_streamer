@@ -11,13 +11,15 @@ import json
 import config
 from typing import Dict, List, Optional
 
-# Import GStreamer managers
+# Import DeckLink hardware manager (SDK Based)
+from decklink_manager import DeckLinkManager
+
+# Attempt GStreamer import for actual streaming operations
 try:
-    from decklink_manager import DeckLinkManager
     from gstreamer_manager import GStreamerManager
     GSTREAM_AVAILABLE = True
 except Exception as e:
-    logging.warning(f"GStreamer not available: {e}")
+    logging.warning(f"GStreamer libraries not found. Streaming will be disabled, but discovery is available: {e}")
     GSTREAM_AVAILABLE = False
 
 app = FastAPI()
@@ -30,17 +32,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize GStreamer managers
+# Initialize DeckLink SDK Manager (Always available)
+decklink_mgr = DeckLinkManager()
+
+# Initialize GStreamer and Sentinel only if libraries are present
 if GSTREAM_AVAILABLE:
-    decklink_mgr = DeckLinkManager()
-    gstreamer_mgr = GStreamerManager()
-    
-    # Initialize Autonomous Sentinel Service
-    from sentinel import StreamSentinel
-    sentinel_service = StreamSentinel(decklink_mgr, gstreamer_mgr)
-    sentinel_service.start()
+    try:
+        gstreamer_mgr = GStreamerManager()
+        # Initialize Autonomous Sentinel Service
+        from sentinel import StreamSentinel
+        sentinel_service = StreamSentinel(decklink_mgr, gstreamer_mgr)
+        sentinel_service.start()
+    except Exception as e:
+        logger.error(f"Failed to initialize GStreamer even though libraries were present: {e}")
+        gstreamer_mgr = None
+        sentinel_service = None
 else:
-    decklink_mgr = None
     gstreamer_mgr = None
     sentinel_service = None
 
