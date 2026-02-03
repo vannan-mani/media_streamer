@@ -85,6 +85,7 @@ class RTMPPipelineManager:
                 multicast_ip, video_port, audio_port, rtmp_url, preset
             )
             
+            cmd = f"gst-launch-1.0 {pipeline_str}"
             logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
             
             process = subprocess.Popen(
