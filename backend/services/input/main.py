@@ -23,7 +23,8 @@ class InputService:
         self.config = ConfigManager()
         self.pipeline_manager = UDPPipelineManager()
         self.probe_path = os.path.join(os.path.dirname(__file__), '../../cpp/sentinel-probe')
-        
+        self.running_pipelines = {}  # input_id -> pid
+
     def discover_hardware(self):
         """Run sentinel-probe to discover DeckLink devices"""
         try:
@@ -77,7 +78,7 @@ class InputService:
                 signal_detected = inp.get('signal_detected', False)
                 input_id = inp.get('id', f"{device_id}_input_{idx}")
                 
-                # Find or create input entry
+                # Find or create input entry (Update registry structure)
                 input_entry = next((i for i in device_entry['inputs'] if i['id'] == input_id), None)
                 if not input_entry:
                     mcast_ip, v_port, a_port = self.assign_udp_ports(device_number, idx)
@@ -96,16 +97,17 @@ class InputService:
                     }
                     device_entry['inputs'].append(input_entry)
                 
-                # Update signal status
+                # Update registry signal status
                 input_entry['signal_detected'] = signal_detected
                 input_entry['format'] = inp.get('format')
-                
-                # Manage pipelines
                 udp_config = input_entry['udp']
+
+                # LOGIC: Signal -> Running Process
+                is_running = input_id in self.running_pipelines
                 
-                if signal_detected and udp_config['status'] != 'streaming':
-                    # Start UDP pipeline
-                    logger.info(f"Starting UDP pipeline for {input_id} ({inp.get('format')})")
+                if signal_detected and not is_running:
+                    # START
+                    logger.info(f"Signal detected on {input_id}. Starting UDP pipeline...")
                     pid = self.pipeline_manager.start(
                         device_number=device_number,
                         multicast_ip=udp_config['multicast_ip'],
@@ -113,45 +115,35 @@ class InputService:
                         audio_port=udp_config['audio_port']
                     )
                     if pid:
+                        self.running_pipelines[input_id] = pid
+                        # Update status for UI
                         udp_config['status'] = 'streaming'
                         udp_config['pipeline_pid'] = pid
                 
-                elif not signal_detected and udp_config['status'] == 'streaming':
-                    # Stop UDP pipeline
-                    logger.info(f"Stopping UDP pipeline for {input_id}  (signal lost)")
-                    if udp_config['pipeline_pid']:
-                        self.pipeline_manager.stop(udp_config['pipeline_pid'])
+                elif not signal_detected and is_running:
+                    # STOP
+                    logger.info(f"Signal lost on {input_id}. Stopping UDP pipeline...")
+                    pid = self.running_pipelines[input_id]
+                    self.pipeline_manager.stop(pid)
+                    del self.running_pipelines[input_id]
+                    # Update status for UI
                     udp_config['status'] = 'stopped'
                     udp_config['pipeline_pid'] = None
-        
-        # Save updated registry
+                
+                # Safety: If we think we're running, ensure registry matches
+                if input_id in self.running_pipelines:
+                     udp_config['status'] = 'streaming'
+                     udp_config['pipeline_pid'] = self.running_pipelines[input_id]
+                elif not signal_detected: # Only mark stopped if no signal. If signal but failed start, we retry next loop
+                     udp_config['status'] = 'stopped'
+                     udp_config['pipeline_pid'] = None
+
+        # Save updated registry (Status Reporting Only)
         self.config.write('device_registry.json', registry)
     
-    def reset_registry_state(self):
-        """Reset all inputs to stopped state on startup to prevent stale state issues"""
-        try:
-            registry = self.config.read('device_registry.json', {'devices': {}})
-            changes_made = False
-            
-            for device in registry.get('devices', {}).values():
-                for inp in device.get('inputs', []):
-                    if inp.get('udp', {}).get('status') == 'streaming':
-                        inp['udp']['status'] = 'stopped'
-                        inp['udp']['pipeline_pid'] = None
-                        changes_made = True
-            
-            if changes_made:
-                self.config.write('device_registry.json', registry)
-                logger.info("Reset stale registry state to 'stopped'")
-        except Exception as e:
-            logger.error(f"Failed to reset registry state: {e}")
-
     def run(self):
         """Main service loop"""
         logger.info("Sentinel Input Service starting...")
-        
-        # Reset state on startup
-        self.reset_registry_state()
         
         while True:
             try:
