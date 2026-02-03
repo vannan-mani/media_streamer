@@ -85,12 +85,20 @@ class RTMPPipelineManager:
                 multicast_ip, video_port, audio_port, rtmp_url, preset
             )
             
-            logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
+            # Safe URL logging
+            try:
+                url_parts = rtmp_url.split('/')
+                safe_url = url_parts[2] if len(url_parts) > 2 else "unknown"
+                logger.info(f"Starting RTMP stream to {safe_url}")
+            except:
+                logger.info("Starting RTMP stream")
             
             # Use shell=True because pipeline_str contains complex quoted arguments
             # Redirect stderr to a log file since shell=True prevents direct stderr pipe access
             import tempfile
             stderr_log = os.path.join(tempfile.gettempdir(), f"gst_stderr_{os.getpid()}.log")
+            
+            logger.info(f"GStreamer stderr will be logged to: {stderr_log}")
             
             # Set GST_DEBUG and redirect stderr to file
             cmd = f"GST_DEBUG=identity:5,fpsdisplaysink:5 gst-launch-1.0 {pipeline_str} 2>{stderr_log}"
