@@ -246,7 +246,22 @@ class StreamSentinel:
                     
                     # Also load configuration override if exists
                     if 'configuration' in data:
-                        self.configuration.update(data['configuration'])
+                        cfg = data['configuration']
+                        
+                        # MIGRATION: Convert old selected_channel_id to new selected_destination_id
+                        if 'selected_channel_id' in cfg and not cfg.get('selected_destination_id'):
+                            old_channel_id = cfg['selected_channel_id']
+                            # Assume it's a YouTube stream ID (old format was just "main", "backup", etc.)
+                            cfg['selected_destination_id'] = f"youtube:{old_channel_id}"
+                            logger.info(f"Migrated old channel_id '{old_channel_id}' to destination_id '{cfg['selected_destination_id']}'")
+                        
+                        # Ensure new fields exist with defaults
+                        if 'selected_input_id' not in cfg:
+                            cfg['selected_input_id'] = None
+                        if 'selected_destination_id' not in cfg:
+                            cfg['selected_destination_id'] = "youtube:main"
+                        
+                        self.configuration.update(cfg)
                         
                     logger.info(f"Sentinel: Loaded intent '{val}' from disk")
                     return val
