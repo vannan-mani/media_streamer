@@ -34,6 +34,7 @@ class UDPPipelineManager:
         ! udpsink host={multicast_ip} port={video_port} auto-multicast=true ttl-mc=1 async=false
         
         decklinkaudiosrc device-number={device_number}
+        ! audioconvert ! audioresample
         ! audio/x-raw,format=S16LE,channels=2,rate=48000
         ! rtpL16pay mtu=1400
         ! udpsink host={multicast_ip} port={audio_port} auto-multicast=true ttl-mc=1 async=false
