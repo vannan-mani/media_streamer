@@ -87,17 +87,16 @@ class RTMPPipelineManager:
             
             logger.info(f"Starting RTMP stream to {rtmp_url.split('/')[2]}")  # Hide key
             
-            # Use shell=False for better signal management
-            # We need to export GST_DEBUG to see identity output in stderr
-            env = os.environ.copy()
-            env["GST_DEBUG"] = "identity:3,fpsdisplaysink:3"
+            # Use shell=True because pipeline_str contains complex quoted arguments
+            # Set GST_DEBUG to enable identity element logging
+            cmd = f"GST_DEBUG=identity:5,fpsdisplaysink:5 gst-launch-1.0 {pipeline_str}"
             
             process = subprocess.Popen(
-                ['gst-launch-1.0'] + pipeline_str.split(),
+                cmd,
+                shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
-                env=env,
                 preexec_fn=os.setsid if os.name != 'nt' else None
             )
             
