@@ -8,11 +8,12 @@ echo "=================================================="
 echo "  Sentinel SOA Deployment v2.0"
 echo "=================================================="
 
-# Step 1: Pull latest code
+# Step 1: Force sync with latest code
 echo ""
-echo "[1/7] Pulling latest code from repository..."
-git pull origin main
-echo " ✓ Code updated"
+echo "[1/7] Syncing with repository (Force)..."
+git fetch --all
+git reset --hard origin/main
+echo " ✓ Code synchronized (local changes discarded)"
 
 # Step 2: Build frontend
 echo ""
