@@ -31,6 +31,46 @@ app.add_middleware(
 # Shared configuration manager
 config = ConfigManager()
 
+# Global metrics cache (updated by background thread)
+_metrics_cache = {
+    'cpu': 0.0,
+    'memory': {'used': 0, 'total': 0, 'percent': 0.0},
+    'temperature': 0
+}
+
+def _update_metrics():
+    """Background thread to update system metrics every 2 seconds"""
+    import time
+    while True:
+        try:
+            # Get accurate CPU (2-second interval)
+            cpu = psutil.cpu_percent(interval=2)
+            mem = psutil.virtual_memory()
+            
+            # Get temperature (if available)
+            temp = 0
+            try:
+                temps = psutil.sensors_temperatures()
+                if temps and 'coretemp' in temps:
+                    temp = int(temps['coretemp'][0].current)
+            except:
+                pass
+            
+            _metrics_cache['cpu'] = round(cpu, 1)
+            _metrics_cache['memory'] = {
+                'used': mem.used,
+                'total': mem.total,
+                'percent': mem.percent
+            }
+            _metrics_cache['temperature'] = temp
+        except Exception as e:
+            logger.error(f"Metrics update error: {e}")
+
+# Start metrics monitoring thread
+import threading
+metrics_thread = threading.Thread(target=_update_metrics, daemon=True)
+metrics_thread.start()
+
 # Load static configurations
 def load_stream_config():
     """Load stream destinations"""
@@ -220,29 +260,14 @@ def get_stream_telemetry():
 # Health check
 @app.get("/api/health")
 def health_check():
-    mem = psutil.virtual_memory()
-    
-    # Get temperature (if available)
-    temp = 0
-    try:
-        temps = psutil.sensors_temperatures()
-        if temps and 'coretemp' in temps:
-            temp = int(temps['coretemp'][0].current)
-    except:
-        pass
-    
     return {
         "status": "healthy",
         "service": "sentinel-api",
         "version": "2.0.0",
-        "cpu": round(psutil.cpu_percent(interval=1), 1),
+        "cpu": _metrics_cache['cpu'],
         "gpu": 0, # Placeholder until nvidia-smi integration
-        "temperature": temp,
-        "memory": {
-            "used": mem.used,
-            "total": mem.total,
-            "percent": mem.percent
-        }
+        "temperature": _metrics_cache['temperature'],
+        "memory": _metrics_cache['memory']
     }
 
 # Serve frontend
