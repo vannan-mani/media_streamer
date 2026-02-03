@@ -229,46 +229,47 @@ class RTMPPipelineManager:
                     # Format A: video_stats (00:00:05): 5 seconds, 150 frames, 30 fps
                     # Format B: video_stats (00:00:05): 5 seconds (occurs if framerate is unknown)
                     if 'video_stats' in line:
-                        logger.debug(f"Found stats line: {line.strip()}")
+                        # Log the raw line for debugging (user request: "what is the parameter name on console")
+                        logger.info(f"GStreamer Stats Line: {line.strip()}")
                         
                         # Extract Duration (seconds) - Reliable heartbeat
-                        duration_match = re.search(r'(\d+)\s*seconds', line)
+                        # Use [^\d]* to be forgiving of weird chars lik 'n' or punctuation
+                        duration_match = re.search(r'(\d+)[^\d]*seconds', line)
+                        updated = False
+                        
                         if duration_match:
                             current_duration = int(duration_match.group(1))
-                            
-                            # Calculate FPS manually if not explicitly provided
-                            # If duration increased by 1, we assume it's a 1-second interval
                             if current_duration > stats.get('last_duration', 0):
-                                # If we don't have explicit FPS, use the configured source FPS as health indicator
-                                # or calculate based on frames if we have them
                                 stats['last_duration'] = current_duration
+                                updated = True
                                 if 'fps' not in line:
-                                    stats['fps'] = float(src_fps) # Assume healthy if it's counting up
+                                    stats['fps'] = float(src_fps)
                             
-                        # Extract FPS explicitly if present
+                        # Extract FPS
                         fps_match = re.search(r'([\d\.]+)\s*fps', line)
                         if fps_match:
                             stats['fps'] = float(fps_match.group(1))
+                            updated = True
                             
                         # Extract total frames
                         frames_match = re.search(r'(\d+)\s*frames', line)
                         if frames_match:
-                            current_frames = int(frames_match.group(1))
-                            stats['frames_processed'] = current_frames
+                            stats['frames_processed'] = int(frames_match.group(1))
+                            updated = True
                         
-                    # Calculate bitrate based on encoding preset
-                    if stats['fps'] > 0:
-                        # Use 90% of target bitrate as "actual" to show real activity
-                        stats['bitrate'] = int(bitrate * 0.95)
-                        
-                    # Update duration
-                    current_time = time.time()
-                    stats['stream_duration'] = int(current_time - start_time)
-                    stats['last_update'] = current_time
-                    
-                    # Write stats
-                    logger.info(f"Writing stats: FPS={stats['fps']}, Frames={stats['frames_processed']}")
-                    stats_mgr.write('stream_stats.json', stats)
+                        if updated:
+                            # Update duration and bitrate
+                            current_time = time.time()
+                            stats['stream_duration'] = int(current_time - start_time)
+                            stats['last_update'] = current_time
+                            
+                            # Estimate bitrate based on health
+                            if stats['fps'] > 0:
+                                stats['bitrate'] = int(bitrate * 0.95)
+                            
+                            # Write stats ONLY when we have an update
+                            logger.info(f"Updated Stats: FPS={stats['fps']}, Duration={stats['last_duration']}s")
+                            stats_mgr.write('stream_stats.json', stats)
                     
         except Exception as e:
             logger.error(f"Stats monitoring error: {e}", exc_info=True)
