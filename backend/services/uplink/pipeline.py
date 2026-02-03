@@ -49,14 +49,16 @@ class RTMPPipelineManager:
         ! rtp.recv_rtp_sink_0
         rtp. ! rtpvrawdepay ! videoconvert 
         ! videoscale ! video/x-raw,width={width},height={height}
-        ! queue max-size-buffers=3 leaky=downstream
-        ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
-        ! video/x-h264,profile=high
-        ! h264parse ! queue name=v_enc
+        ! identity name=video_stats silent=false
+        ! tee name=t 
+        t. ! queue max-size-buffers=3 leaky=downstream ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
+           ! video/x-h264,profile=high ! h264parse ! queue name=v_enc
+        t. ! queue max-size-buffers=3 leaky=downstream ! fpsdisplaysink name=fps_monitor text-overlay=false signal-fps-measurements=true sync=false
         
         udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo" caps="application/x-rtp"
         ! rtp.recv_rtp_sink_1
         rtp. ! rtpL16depay ! audioconvert ! audioresample 
+        ! identity name=audio_stats silent=false
         ! queue max-size-buffers=3 leaky=downstream
         ! avenc_aac bitrate=128000
         ! aacparse ! queue name=a_enc
