@@ -52,7 +52,7 @@ const EndpointMasterCard: React.FC<EndpointMasterCardProps> = ({
                                 level={3}
                                 isSelected={selectedStreamId === destinationId}
                                 isSelectable={true}
-                                onSelect={() => onSelectStream(destination Id)}
+                                onSelect={() => onSelectStream(destinationId)}
                                 metadata={{
                                     description: stream.description
                                 }}

@@ -93,17 +93,10 @@ export interface SentinelState {
 
 export const useSentinel = () => {
     const [state, setState] = useState<SentinelState | null>(null);
-    const [channels, setChannels] = useState<Channel[]>([]);
-    const [presets, setPresets] = useState<Preset[]>([]);
-
-    // Hierarchical data (2-level - legacy)
-    const [endpoints, setEndpoints] = useState<Record<string, PlatformGroup>>({});
-    const [presetsGrouped, setPresetsGrouped] = useState<Record<string, QualityGroup>>({});
-
-    // 3-Level Hierarchical data
+    // 3-level hierarchical data (current)
     const [inputDevices, setInputDevices] = useState<Record<string, InputDevice>>({});
     const [destinations, setDestinations] = useState<Record<string, DestinationPlatform>>({});
-    const [encodingPresets, setEncodingPresets] = useState<Record<string, PresetQuality>>({});
+    const [encodingPresets, setEncodingPresets] = useState<Record<string, EncodingQuality>>({});
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
