@@ -99,7 +99,28 @@ class InputService:
                 
                 # Update registry signal status
                 input_entry['signal_detected'] = signal_detected
-                input_entry['format'] = inp.get('format')
+                format_str = inp.get('format', '')
+                input_entry['format'] = format_str
+                
+                # Parse format for width/height/fps if signal is present
+                if signal_detected and format_str:
+                    try:
+                        # Simple parser for common DeckLink format strings (e.g. 1080p60, 720p50, NTSC, PAL)
+                        if '1080' in format_str:
+                            input_entry['width'], input_entry['height'] = 1920, 1080
+                            input_entry['fps'] = 60 if '60' in format_str else 50 if '50' in format_str else 30 if '30' in format_str else 25
+                        elif '720' in format_str:
+                            input_entry['width'], input_entry['height'] = 1280, 720
+                            input_entry['fps'] = 60 if '60' in format_str else 50 if '50' in format_str else 30
+                        elif 'PAL' in format_str:
+                            input_entry['width'], input_entry['height'] = 720, 576
+                            input_entry['fps'] = 25
+                        elif 'NTSC' in format_str:
+                            input_entry['width'], input_entry['height'] = 720, 486
+                            input_entry['fps'] = 30
+                    except Exception as e:
+                        logger.error(f"Failed to parse format {format_str}: {e}")
+                
                 udp_config = input_entry['udp']
 
                 # LOGIC: Signal -> Running Process

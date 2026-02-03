@@ -29,8 +29,8 @@ class UDPPipelineManager:
         """
         pipeline = f"""
         decklinkvideosrc device-number={device_number} connection=sdi mode=auto
+        ! queue max-size-buffers=3
         ! videoconvert
-        ! video/x-raw,format=I420,width=1920,height=1080
         ! rtpvrawpay mtu=1400
         ! udpsink host={multicast_ip} port={video_port} auto-multicast=true ttl-mc=1 async=false multicast-iface="lo"
         

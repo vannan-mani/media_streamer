@@ -138,7 +138,8 @@ class UplinkService:
                 video_port=udp_config['video_port'],
                 audio_port=udp_config['audio_port'],
                 rtmp_url=rtmp_url,
-                preset=preset
+                preset=preset,
+                input_config=input_entry
             )
             
             if pid:

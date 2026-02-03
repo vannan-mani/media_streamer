@@ -23,7 +23,7 @@ class RTMPPipelineManager:
         self.active_pipelines = {}
     
     def build_pipeline(self, multicast_ip: str, video_port: int, audio_port: int,
-                       rtmp_url: str, preset: Dict) -> str:
+                       rtmp_url: str, preset: Dict, input_config: Dict = None) -> str:
         """
         Build GStreamer pipeline for UDP → RTMP encoding
         
@@ -33,6 +33,7 @@ class RTMPPipelineManager:
             audio_port: RTP audio port
             rtmp_url: Full RTMP destination URL
             preset: Encoding preset dict with bitrate, fps, etc.
+            input_config: Optional dict containing source resolution (width, height, fps)
         
         Returns:
             GStreamer pipeline string
@@ -44,12 +45,26 @@ class RTMPPipelineManager:
         width = preset.get('width', 1920)
         height = preset.get('height', 1080)
         
-        # Use progressreport for reliable statistics (format: 00:00:00 / 00:00:00)
-        # progressreport syntax: name (00:00:05): 5 seconds, 150 frames, 30 fps, 0.00 %
+        # Build dynamic caps based on input signal if available
+        # Default to 1080p if not specified (safe fallback)
+        src_w = input_config.get('width', 1920) if input_config else 1920
+        src_h = input_config.get('height', 1080) if input_config else 1080
+        src_fps = input_config.get('fps', 60) if input_config else 60
+        
+        # RTP raw caps require precise strings for negotiation
+        # Use sampling=YCbCr-4:2:2 for UYVY (the native DeckLink format we multicast)
+        video_caps = (
+            f"application/x-rtp, media=(string)video, clock-rate=(int)90000, "
+            f"encoding-name=(string)RAW, sampling=(string)YCbCr-4:2:2, "
+            f"depth=(string)8, width=(string){src_w}, height=(string){src_h}, "
+            f"framerate=(fraction){src_fps}/1"
+        )
+        
+        # Use progressreport for reliable statistics
         pipeline = f"""
         rtpbin name=rtp latency=0
         
-        udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="application/x-rtp"
+        udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="{video_caps}"
         ! rtp.recv_rtp_sink_0
         rtp. ! rtpvrawdepay ! videoconvert 
         ! videoscale ! video/x-raw,width={width},height={height}
@@ -75,7 +90,7 @@ class RTMPPipelineManager:
         return ' '.join(pipeline.split())
     
     def start(self, multicast_ip: str, video_port: int, audio_port: int,
-              rtmp_url: str, preset: Dict) -> Optional[int]:
+              rtmp_url: str, preset: Dict, input_config: Dict = None) -> Optional[int]:
         """
         Start RTMP encoding pipeline
         
@@ -84,7 +99,7 @@ class RTMPPipelineManager:
         """
         try:
             pipeline_str = self.build_pipeline(
-                multicast_ip, video_port, audio_port, rtmp_url, preset
+                multicast_ip, video_port, audio_port, rtmp_url, preset, input_config
             )
             
             # Safe URL logging
