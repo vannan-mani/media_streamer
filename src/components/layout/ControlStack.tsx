@@ -56,10 +56,18 @@ const ControlStack: React.FC = () => {
     };
 
     const updateBackendConfig = (channelId: string, streamId: string, variantId: string) => {
-        // Extract device ID from channel ID (format: "deviceId_chX")
+        // Extract device ID from channel ID (format: "deviceId_chX" or "input_X")
         const deviceId = parseInt(channelId.split('_')[0]) || 0;
-        // For now, use legacy setConfiguration - will need to update backend API later
-        setConfiguration(deviceId, streamId, variantId);
+
+        // Build destination_id in format "platform:stream"
+        // streamId is now the platform_stream pair (e.g., "youtube:main")
+        const destinationId = streamId;
+
+        // inputId is the hardware input (e.g., "input_0")
+        const inputId = channelId;
+
+        // Call with new 3-tier structure: (deviceId, inputId, destinationId, presetId)
+        setConfiguration(deviceId, inputId, destinationId, variantId);
     };
 
     const handleToggle = () => {

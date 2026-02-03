@@ -85,7 +85,8 @@ export interface SentinelState {
     hardware: Record<string, any>; // Hardware Registry
     settings: { // Configuration Selections
         selected_device_id: number;
-        selected_channel_id: string;
+        selected_input_id: string | null;
+        selected_destination_id: string | null; // Format: "youtube:main"
         selected_preset_id: string;
     };
 }
@@ -178,15 +179,21 @@ export const useSentinel = () => {
         }
     }, []);
 
-    // Set Configuration
-    const setConfiguration = useCallback(async (deviceId: number, channelId: string, presetId: string) => {
+    // Set Configuration (new 3-tier structure)
+    const setConfiguration = useCallback(async (
+        deviceId: number,
+        inputId: string | null,
+        destinationId: string | null,
+        presetId: string
+    ) => {
         try {
             await fetch('/api/sentinel/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     selected_device_id: deviceId,
-                    selected_channel_id: channelId,
+                    selected_input_id: inputId,
+                    selected_destination_id: destinationId,
                     selected_preset_id: presetId
                 }),
             });
@@ -195,7 +202,8 @@ export const useSentinel = () => {
                 ...prev,
                 settings: {
                     selected_device_id: deviceId,
-                    selected_channel_id: channelId,
+                    selected_input_id: inputId,
+                    selected_destination_id: destinationId,
                     selected_preset_id: presetId
                 }
             } : null);
@@ -207,11 +215,12 @@ export const useSentinel = () => {
     // Helper: Check if configuration is complete
     const isConfigurationComplete = useMemo(() => {
         if (!state) return false;
-        const { selected_device_id, selected_channel_id, selected_preset_id } = state.settings;
+        const { selected_device_id, selected_destination_id, selected_preset_id } = state.settings;
         return (
             selected_device_id !== null &&
             selected_device_id !== undefined &&
-            selected_channel_id !== '' &&
+            selected_destination_id !== null &&
+            selected_destination_id !== '' &&
             selected_preset_id !== ''
         );
     }, [state]);
