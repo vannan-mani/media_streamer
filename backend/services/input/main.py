@@ -127,9 +127,31 @@ class InputService:
         # Save updated registry
         self.config.write('device_registry.json', registry)
     
+    def reset_registry_state(self):
+        """Reset all inputs to stopped state on startup to prevent stale state issues"""
+        try:
+            registry = self.config.read('device_registry.json', {'devices': {}})
+            changes_made = False
+            
+            for device in registry.get('devices', {}).values():
+                for inp in device.get('inputs', []):
+                    if inp.get('udp', {}).get('status') == 'streaming':
+                        inp['udp']['status'] = 'stopped'
+                        inp['udp']['pipeline_pid'] = None
+                        changes_made = True
+            
+            if changes_made:
+                self.config.write('device_registry.json', registry)
+                logger.info("Reset stale registry state to 'stopped'")
+        except Exception as e:
+            logger.error(f"Failed to reset registry state: {e}")
+
     def run(self):
         """Main service loop"""
         logger.info("Sentinel Input Service starting...")
+        
+        # Reset state on startup
+        self.reset_registry_state()
         
         while True:
             try:
