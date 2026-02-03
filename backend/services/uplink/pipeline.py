@@ -61,28 +61,26 @@ class RTMPPipelineManager:
         )
         
         # Use progressreport for reliable statistics
-        # Added videorate to handle variable/0/1 framerate inputs gracefully
+        # Added videorate and explicit queues to fix buffering warnings
         pipeline = f"""
         udpsrc multicast-group={multicast_ip} port={video_port} multicast-iface="lo" caps="{video_caps}"
+        ! queue max-size-buffers=5 leaky=downstream
         ! rtpvrawdepay ! videoconvert ! videorate
         ! video/x-raw,framerate={src_fps}/1
         ! videoscale ! video/x-raw,width={width},height={height}
-        ! progressreport name=video_stats update-freq=1 silent=false 
-        ! queue max-size-buffers=3 leaky=downstream 
-        ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
+        ! queue ! x264enc bitrate={bitrate} speed-preset=veryfast tune=zerolatency key-int-max={fps*2}
         ! video/x-h264,profile=high ! h264parse ! queue name=v_enc
         
         udpsrc multicast-group={multicast_ip} port={audio_port} multicast-iface="lo" caps="application/x-rtp"
-        ! rtpL16depay ! audioconvert ! audioresample 
-        ! progressreport name=audio_stats update-freq=1 silent=false 
-        ! queue max-size-buffers=3 leaky=downstream
+        ! queue ! rtpL16depay ! audioconvert ! audioresample ! queue
         ! avenc_aac bitrate=128000
         ! aacparse ! queue name=a_enc
         
         flvmux name=mux streamable=true
         v_enc. ! mux.
         a_enc. ! mux.
-        mux. ! rtmpsink location="{rtmp_url} live=1"
+        mux. ! progressreport name=video_stats update-freq=1 silent=false 
+        ! queue ! rtmpsink location="{rtmp_url}" sync=true
         """
         
         return ' '.join(pipeline.split())
@@ -241,15 +239,17 @@ class RTMPPipelineManager:
                         logger.info(f"GStreamer Stats Line: {line.strip()}")
                         
                         # Extract Duration (seconds) - Reliable heartbeat
-                        # Use [^\d]* to be forgiving of weird chars lik 'n' or punctuation
+                        # Use [^\d]* to be forgiving of weird chars like 'n' or punctuation
+                        # GStreamer logs usually look like: video_stats (00:00:10): 10 seconds
                         duration_match = re.search(r'(\d+)[^\d]*seconds', line)
                         updated = False
                         
                         if duration_match:
                             current_duration = int(duration_match.group(1))
-                            if current_duration > stats.get('last_duration', 0):
+                            if current_duration > stats.get('last_duration', -1):
                                 stats['last_duration'] = current_duration
                                 updated = True
+                                # If we don't have explicit FPS in the line, calculate it from duration
                                 if 'fps' not in line:
                                     stats['fps'] = float(src_fps)
                             
