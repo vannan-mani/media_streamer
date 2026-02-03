@@ -11,11 +11,12 @@ interface StreamTelemetry {
     keyframe_interval: string;
 }
 
-export const useStreamTelemetry = (enabled: boolean = true) => {
+export const useStreamTelemetry = (enabled: boolean = false) => {
     const [telemetry, setTelemetry] = useState<StreamTelemetry | null>(null);
     const [isStreaming, setIsStreaming] = useState(false);
 
     useEffect(() => {
+        // DISABLED: /api/stream/telemetry not implemented in SOA architecture yet
         if (!enabled) return;
 
         const fetchTelemetry = async () => {

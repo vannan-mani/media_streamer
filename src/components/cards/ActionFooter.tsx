@@ -37,7 +37,7 @@ const ActionFooter: React.FC<ActionFooterProps> = ({
                         )}
                         <div className="status-info">
                             <span className="status-label">{isLive ? 'STREAMING' : 'SYSTEM STATUS'}</span>
-                            <span className="status-value">{status.toUpperCase()}</span>
+                            <span className="status-value">{status?.toUpperCase() || 'INITIALIZING'}</span>
                         </div>
                     </div>
                 </div>
